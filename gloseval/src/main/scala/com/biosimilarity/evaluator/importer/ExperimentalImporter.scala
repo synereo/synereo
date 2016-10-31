@@ -1,36 +1,27 @@
-// -*- mode: Scala;-*-
-// Filename:    Importer.scala
-// Authors:     lgm
-// Creation:    Tue Jan 19 16:49:16 2016
-// Copyright:   Not supplied
-// Description:
-// ------------------------------------------------------------------------
-
-package com.biosimilarity.evaluator.importerExperimental
+package com.biosimilarity.evaluator.importer
 
 import java.io.File
+import java.net.URI
 import java.util.UUID
 
 import com.biosimilarity.evaluator.api._
 import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.importer.models._
 import com.biosimilarity.evaluator.omni.OmniClient
-import com.biosimilarity.evaluator.spray.NodeUser
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 import com.biosimilarity.evaluator.spray.srp.SRPClient
+import com.biosimilarity.evaluator.util._
+import com.biosimilarity.evaluator.util.mongo._
 import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.write
 
 import scalaj.http.{Http, HttpOptions}
-import com.biosimilarity.evaluator.util.mongo._
 
-class Importer {
+class ExperimentalImporter(host: URI) {
 
   implicit val formats = org.json4s.DefaultFormats
-
-  private val GLOSEVAL_HOST = EvalConfigWrapper.serviceHostURI
 
   // maps loginId to agentURI
   private val agentsById = scala.collection.mutable.Map[String, String]()
@@ -64,7 +55,7 @@ class Importer {
   private def glosevalPost(requestBody: String): String = {
     println(s"REQUEST BODY: $requestBody")
 
-    val req = Http(GLOSEVAL_HOST)
+    val req = Http(host.toString)
       .timeout(1000, 600000)
       .header("Content-Type", "application/json")
       .option(HttpOptions.allowUnsafeSSL)
@@ -322,11 +313,6 @@ class Importer {
     }
   }
 
-  def parseData(dataJsonFile: File = EvalConfigWrapper.serviceDemoDataFile) = {
-    val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
-    parse(dataJson).extract[DataSetDesc]
-  }
-
   def getAgentURI(email: String, password: String) = {
     val json = glosevalPost(GetAgentRequest(email, password))
     val jsv = parse(json)
@@ -373,13 +359,13 @@ class Importer {
     qry.printAliasCnxns()
   }
 
-  def importData(dataJson: String) = {
+  def importData(dataJson: String, email: String, password: String) = {
     val dataset = parse(dataJson).extract[DataSetDesc]
-    getAgentURI(NodeUser.email, NodeUser.password) match {
+    getAgentURI(email, password) match {
       case Some(uri) =>
         val adminId = uri.replace("agent://", "")
         try {
-          val adminSession = createSession(NodeUser.email, NodeUser.password).get
+          val adminSession = createSession(email, password).get
           thrd match {
             case Some(t) => ()
             case None => throw new Exception("polling not started")
@@ -425,18 +411,17 @@ class Importer {
     rslt
   }
 
-  def runTestFile(dataJsonFile: String = "src/test/resources/test-posts.json"): Unit = {
+  def runTestFile(dataJsonFile: String = "src/test/resources/test-posts.json", email: String, password: String): Unit = {
     // this routine doesn't keep sessions alive via longpoll.
     // the calls to expect might ...
     println("testing file : " + dataJsonFile)
 
-    val adminURI =
-      getAgentURI(NodeUser.email, NodeUser.password) match {
+    val adminURI = getAgentURI(email, password) match {
         case Some(uri) => uri
         case _ => throw new Exception("unable to open admin session")
       }
     val adminId = adminURI.replace("agent://", "")
-    val adminSession = createSession(NodeUser.email, NodeUser.password).get
+    val adminSession = createSession(email, password).get
     sessionsById.put(adminId, adminSession) // longpoll on adminSession
     println("using admin session URI : " + adminSession)
     var testOmni = EvalConfigWrapper.isOmniRequired()
@@ -546,22 +531,25 @@ class Importer {
   }
 }
 
-object Importer {
+object ExperimentalImporter {
 
-  def fromFile(dataJsonFile: File = EvalConfigWrapper.serviceDemoDataFile): Int = {
+  def fromFile(dataJsonFile: File,
+               host: URI = EvalConfigWrapper.serviceHostURI,
+               email: String = EvalConfigWrapper.email,
+               password: String = EvalConfigWrapper.password): Int = {
     println(s"Importing file: $dataJsonFile")
     val dataJson: String = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
-    val imp = new Importer()
+    val imp              = new ExperimentalImporter(host)
     imp.start()
-    val rslt = imp.importData(dataJson)
+    val rslt = imp.importData(dataJson, email, password)
     imp.stop()
     println("Import file returning : " + rslt)
-    if (rslt == 0) imp.printStats()
     rslt
   }
 
-  def fromTest(testFileName: String) : Int = {
-    val fnm = s"src/test/resources/importer/${testFileName}.json"
-    fromFile(new File(fnm))
-  }
+  def fromTestData(testDataFilename: String = EvalConfigWrapper.serviceDemoDataFilename,
+                   host: URI = EvalConfigWrapper.serviceHostURI,
+                   email: String = EvalConfigWrapper.email,
+                   password: String = EvalConfigWrapper.password): Int =
+    fromFile(testDir.resolve(s"$testDataFilename.json").toFile, host, email, password)
 }

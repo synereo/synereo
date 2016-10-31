@@ -1,10 +1,7 @@
 package com.biosimilarity.evaluator
 
-import java.io._
-
 import com.biosimilarity.evaluator.api.VersionInfoResponse
 import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
-import com.biosimilarity.evaluator.spray.Boot
 import com.mongodb.casbah.Imports.MongoClient
 import com.mongodb.casbah.MongoClientURI
 import com.rabbitmq.client.{Connection, ConnectionFactory}
@@ -13,29 +10,11 @@ import scala.collection.mutable
 import scala.sys.process._
 import scala.util.Try
 
-package object util extends Helpers {
-
-  def withFileReader[T](file: File)(fn: (FileReader) => T): T = {
-    val fr: FileReader = new FileReader(file)
-    try fn(fr)
-    finally fr.close()
-  }
-
-  def withFileWriter[T](file: File)(fn: (FileWriter) => T): T = {
-    val fw: FileWriter = new FileWriter(file)
-    try fn(fw)
-    finally fw.close()
-  }
-
-  def resourceStream(resourceName: String): InputStream = {
-    val is: InputStream = new FileInputStream(Boot.resourcesDir.resolve(resourceName).toFile)
-    require(is.ne(null), s"Resource $resourceName not found")
-    is
-  }
+package object util extends Helpers with FileHelpers {
 
   def resetMongo(): Unit = {
-    val dbHost = EvalConfigWrapper.readStringOrElse("dbHost", "localhost")
-    val dbPort = EvalConfigWrapper.readStringOrElse("dbPort", "27017")
+    val dbHost                          = EvalConfigWrapper.readStringOrElse("dbHost", "localhost")
+    val dbPort                          = EvalConfigWrapper.readStringOrElse("dbPort", "27017")
     val uri                             = MongoClientURI(s"mongodb://$dbHost:$dbPort/")
     val mongoClient: MongoClient        = MongoClient(uri)
     val dbNames: mutable.Buffer[String] = mongoClient.databaseNames
@@ -49,7 +28,7 @@ package object util extends Helpers {
       val pattern = """(?m)^db version v(\S+)$""".r
       pattern.findFirstIn(s) match {
         case Some(pattern(version)) => version
-        case None => "unknown"
+        case None                   => "unknown"
       }
     }
 
@@ -63,10 +42,7 @@ package object util extends Helpers {
     }.toOption
 
   def versionInfoResponse: VersionInfoResponse =
-    VersionInfoResponse(BuildInfo.version,
-                        BuildInfo.scalaVersion,
-                        mongoVersion().getOrElse("n/a"),
-                        rabbitMQVersion().getOrElse("n/a"))
+    VersionInfoResponse(BuildInfo.version, BuildInfo.scalaVersion, mongoVersion().getOrElse("n/a"), rabbitMQVersion().getOrElse("n/a"))
 
   def getOS: String = System.getProperty("os.name")
 }

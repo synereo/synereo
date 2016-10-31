@@ -181,7 +181,7 @@ class EvaluatorServiceActor extends Actor with EvaluatorService with Serializabl
 
   import EvalHandlerService._
 
-  createNodeUser(NodeUser.email, NodeUser.password, NodeUser.jsonBlob)
+  createNodeUser(EvalConfigWrapper.email, EvalConfigWrapper.password, EvalConfigWrapper.jsonBlob)
 
   def receive = runRoute(myRoute)
 

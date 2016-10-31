@@ -7,8 +7,8 @@ import java.security.cert.X509Certificate
 import java.security.{KeyPair, Security}
 import javax.swing.JOptionPane
 
-import com.biosimilarity.evaluator.spray.{Boot, BootTasks}
-import com.biosimilarity.evaluator.util.{withFileReader, withFileWriter}
+import com.biosimilarity.evaluator.util._
+import com.biosimilarity.evaluator.spray.BootTasks
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.shredzone.acme4j._
 import org.shredzone.acme4j.challenge.Http01Challenge
@@ -132,7 +132,7 @@ object LetsEncrypt {
 
   private def handleChallenge(domain: String, challenge: Http01Challenge): Try[File] =
     Try {
-      val challengeFile: Path = Boot.pwd.resolve(s"challenge/.well-known/acme-challenge/${challenge.getToken}")
+      val challengeFile: Path = pwd.resolve(s"challenge/.well-known/acme-challenge/${challenge.getToken}")
       val _: Path             = Files.createDirectories(challengeFile.getParent)
       withFileWriter[Unit](challengeFile.toFile) { (fw: FileWriter) =>
         fw.write(challenge.getAuthorization)

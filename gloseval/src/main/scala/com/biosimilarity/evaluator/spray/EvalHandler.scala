@@ -1145,7 +1145,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     val aliasURI = new URI("alias://" + cap + "/alias")
     val selfCnxn = getCapSelfCnxn(cap)
-    val nodeAgentCap = emailToCap(NodeUser.email)
+    val nodeAgentCap = emailToCap(EvalConfigWrapper.email)
     val nodeAliasURI = new URI("alias://" + nodeAgentCap + "/alias")
     val nodeAliasCnxn = PortableAgentCnxn(nodeAliasURI, "alias", nodeAliasURI)
     val cnxnLabel = UUID.randomUUID().toString

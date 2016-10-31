@@ -17,7 +17,7 @@ import scala.util.{Failure, Success, Try}
 trait BootTasks {
 
   sealed trait Certificate extends Serializable
-  case object SelfSigned extends Certificate with Serializable
+  case object SelfSigned   extends Certificate with Serializable
 
   @transient
   val logger: Logger = LoggerFactory.getLogger(classOf[BootTasks])
@@ -29,7 +29,11 @@ trait BootTasks {
     logger.info(s"Starting GLoSEval in ${Config.deploymentMode().toString.toLowerCase} mode...")
     val clientsHostsNPorts: List[(String, Int)] = DSLCommLinkCtor.clientHostsNPorts()
     logger.info(s"Clients: $clientsHostsNPorts")
-    (keystoreExists, Config.nodeMode(), Config.deploymentMode(), rabbitIsRunning(rabbitHost, rabbitPort), mongoIsRunning(mongoHost, mongoPort)) match {
+    (keystoreExists,
+     Config.nodeMode(),
+     Config.deploymentMode(),
+     rabbitIsRunning(rabbitHost, rabbitPort),
+     mongoIsRunning(mongoHost, mongoPort)) match {
       case (false, Headed, _, _, _) =>
         logger.error("TLS Certificate not found.  Please run the 'gencert' command.")
         System.exit(1)
@@ -60,16 +64,12 @@ trait BootTasks {
   def runImporter(file: Option[File]): Unit = {
     resetDatabase()
     startServer()
-    val importerFile: File = file.getOrElse(Config.serviceDemoDataFile)
-    logger.info(s"Importing ${importerFile.getAbsolutePath}...")
     Thread.sleep(5000)
-    Importer.fromFile(importerFile)
+    file match {
+      case Some(f) => Importer.fromFile(f)
+      case None    => Importer.fromTestData()
+    }
   }
-
-  def pwd: Path = Paths.get(".").toAbsolutePath.normalize()
-
-  def resourcesDir: Path =
-    Paths.get(classOf[Server].getProtectionDomain.getCodeSource.getLocation.toURI).getParent.getParent.resolve("resources")
 
   def keystoreExists: Boolean = Files.exists(resourcesDir.resolve("keystore.jks"))
 

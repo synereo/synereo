@@ -37,15 +37,11 @@ package object usage extends ApiClient {
     resetMongo()
   }
 
-  def loadQueryData(dataJsonFileName: String): Int = {
-    loadQueryData(new File(dataJsonFileName))
-  }
-
-  def loadQueryData(dataJsonFile: File = Config.serviceDemoDataFile): Int = {
+  def loadQueryData(dataJsonFile: String = Config.serviceDemoDataFilename): Int = {
     stopServer()
     resetDatabase()
     startServer()
-    Importer.fromFile(dataJsonFile)
+    Importer.fromTestData(dataJsonFile)
   }
 
   def startServer(): Unit = {

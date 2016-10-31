@@ -9,15 +9,16 @@
 package com.biosimilarity.evaluator.importer
 
 import java.io.File
+import java.net.URI
 import java.util.UUID
 
 import com.biosimilarity.evaluator.api._
 import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.importer.models._
 import com.biosimilarity.evaluator.omni.OmniClient
-import com.biosimilarity.evaluator.spray.NodeUser
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 import com.biosimilarity.evaluator.spray.srp.SRPClient
+import com.biosimilarity.evaluator.util._
 import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -25,11 +26,9 @@ import org.json4s.jackson.Serialization.write
 
 import scalaj.http.{Http, HttpOptions}
 
-class Importer {
+class Importer(host: URI) {
 
   implicit val formats = org.json4s.DefaultFormats
-
-  private val GLOSEVAL_HOST = EvalConfigWrapper.serviceHostURI
 
   // maps loginId to agentURI
   private val agentsById = scala.collection.mutable.Map[String, String]()
@@ -62,7 +61,7 @@ class Importer {
   private def glosevalPost(requestBody: String): String = {
     println(s"REQUEST BODY: $requestBody")
 
-    val req = Http(GLOSEVAL_HOST)
+    val req = Http(host.toString)
       .timeout(1000, 600000)
       .header("Content-Type", "application/json")
       .option(HttpOptions.allowUnsafeSSL)
@@ -312,11 +311,6 @@ class Importer {
 
   }
 
-  def parseData(dataJsonFile: File = EvalConfigWrapper.serviceDemoDataFile) = {
-    val dataJson = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
-    parse(dataJson).extract[DataSetDesc]
-  }
-
   private def checkPoll() = {
     if (terminateLongPoll) {
       rslt = 2
@@ -343,12 +337,12 @@ class Importer {
     }
   }
 
-  def importData(dataJson: String) = {
+  def importData(dataJson: String, email: String, password: String) = {
     val dataset = parse(dataJson).extract[DataSetDesc]
     try {
-      val adminSession = createSession(NodeUser.email, NodeUser.password) match {
-        case Some(s) => s //
-        case None => throw new Exception("Unable to create admin session")
+      val adminSession = createSession(email, password) match {
+        case Some(s) => s
+        case None    => throw new Exception("Unable to create admin session")
       }
       sessionsById.put("admin", adminSession)
       thrd match {
@@ -396,20 +390,23 @@ class Importer {
 
 object Importer {
 
-  def fromFile(dataJsonFile: File = EvalConfigWrapper.serviceDemoDataFile): Int = {
+  def fromFile(dataJsonFile: File,
+               host: URI = EvalConfigWrapper.serviceHostURI,
+               email: String = EvalConfigWrapper.email,
+               password: String = EvalConfigWrapper.password): Int = {
     println(s"Importing file: $dataJsonFile")
     val dataJson: String = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
-    val imp = new Importer()
+    val imp              = new Importer(host)
     imp.start()
-    val rslt = imp.importData(dataJson)
+    val rslt = imp.importData(dataJson, email, password)
     imp.stop()
     println("Import file returning : " + rslt)
     rslt
   }
 
-  def fromTest(testFileName: String) : Int = {
-    val fnm = s"src/test/resources/importer/${testFileName}.json"
-    fromFile(new File(fnm))
-  }
-
+  def fromTestData(testDataFilename: String = EvalConfigWrapper.serviceDemoDataFilename,
+                   host: URI = EvalConfigWrapper.serviceHostURI,
+                   email: String = EvalConfigWrapper.email,
+                   password: String = EvalConfigWrapper.password): Int =
+    fromFile(testDir.resolve(s"$testDataFilename.json").toFile, host, email, password)
 }
