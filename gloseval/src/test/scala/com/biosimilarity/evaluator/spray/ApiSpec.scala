@@ -6,22 +6,22 @@ import akka.util.Timeout
 import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.api._
 import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
+import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.spray.client.ApiClient
 import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.util._
+import com.biosimilarity.evaluator.util.mongo.MongoQuery
+import org.json4s.JsonAST.JValue
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization._
 import org.json4s.{BuildInfo => _, _}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.time.{Second, Seconds, Span}
+import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
 import org.slf4j.{Logger, LoggerFactory}
 import spray.can.Http
 import spray.http.Uri
 import spray.io.ClientSSLEngineProvider
-
-import com.biosimilarity.evaluator.importer.Importer
-import com.biosimilarity.evaluator.util.mongo.MongoQuery
 
 import scala.concurrent.Future
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
@@ -177,6 +177,71 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           jb.values.length shouldBe 3
           println(s"Carol's connections: ${pretty(render(jc))}")
           jc.values.length shouldBe 3
+      }
+    }
+
+    "allow the administrator to create users Alice and Bob and allow Alice to make a post which is visible to Bob" in {
+
+      val uid   = "58bbeb443b4c4c0cbda82c99c3178e6e"
+      val label = "each([Vogons])"
+      val expected =
+        """{"$type":"shared.models.MessagePost",
+          |"uid":"58bbeb443b4c4c0cbda82c99c3178e6e",
+          |"created":"2016-09-16T17:17:52Z",
+          |"modified":"2016-09-16T17:18:43Z",
+          |"connections":[{}],
+          |"labels":"notused",
+          |"postContent":
+          |{"$type":"shared.models.MessagePostContent",
+          |"versionedPostId":"35e60447747e496aafde65ca182db1c8",
+          |"versionedPostPredecessorId":"",
+          |"versionNumber":"1",
+          |"allowForwarding":true,
+          |"text":"Oh freddled gruntbuggly,
+          |Thy micturations are to me
+          |As plurdled gabbleblotchits on a lurgid bee.
+          |Groop, I implore thee, my foonting turlingdromes,
+          |And hooptiously drangle me with crinkly bindlewurdles,
+          |Or I will rend thee in the gobberwarts
+          |With my blurglecruncheon, see if I don't!",
+          |"subject":"Like being thrown out of an airlock"}}""".stripMargin.replace("\n", "")
+
+      val eventualJArray: Future[JArray] =
+        for {
+          uri                   <- Future(apiUri)
+          hc                    <- eventualHostConnector(system, uri.effectivePort, clientSSLEngineProvider)
+          isr                   <- openAdminSession(hc, uri, "admin@localhost", "a")
+          alice                 <- createSRPUser(hc, "alice@testing.com", "alice", "a")
+          bob                   <- createSRPUser(hc, "bob@testing.com", "bob", "b")
+          _                     <- makeConnection(hc, uri, isr.sessionURI, alice, bob, "alice_bob")
+          isrA                  <- openSRPSession(hc, uri, "alice@testing.com", "a")
+          spwnssnA              <- spawnSession(hc, uri, isrA.sessionURI)
+          _                     <- getConnectionProfiles(hc, uri, spwnssnA)
+          aliceConnectionsArray <- pingUntilPong(hc, uri, spwnssnA)
+          aliceConnections      <- extractConnections(aliceConnectionsArray)
+          postConnection        <- Future(aliceConnections.find((connection: Connection) => connection.label == "alice_bob").get)
+          _                     <- makePost(hc, uri, isrA.sessionURI, List(postConnection), label, Some(expected), Some(uid))
+          isrB                  <- openSRPSession(hc, uri, "bob@testing.com", "b")
+          spwnssnB              <- spawnSession(hc, uri, isrB.sessionURI)
+          _                     <- getConnectionProfiles(hc, uri, spwnssnB)
+          bobConnectionsArray   <- pingUntilPong(hc, uri, spwnssnB)
+          bobConnections        <- extractConnections(bobConnectionsArray)
+          _                     <- makeQueryOnConnections(hc, uri, spwnssnB, bobConnections, "all([Vogons])")
+          queryArray            <- pingUntilPong(hc, uri, spwnssnB)
+          _                     <- hc.ask(Http.CloseAll)
+        } yield queryArray
+
+      whenReady(eventualJArray) { (jArray: JArray) =>
+
+        println(pretty(render(jArray)))
+
+        val posts = jArray.arr.filter { (value: JValue) =>
+          (value \ "msgType").extract[String] == "evalSubscribeResponse"
+        }.foldLeft(List.empty[String]) { (acc: List[String], value: JValue) =>
+          (value \ "content" \ "pageOfPosts").extract[List[String]]
+        }
+
+        posts should contain(expected)
       }
     }
 

@@ -154,22 +154,22 @@ trait ApiClient extends CapUtilities {
     httpPost(hc, uri, cont)
   }
 
-  def makePost(hc: ActorRef, uri: Uri, sessionUri: String, targets: List[Connection], label: String, uid: String, value: String)(
+  def makePost(hc: ActorRef, uri: Uri, sessionUri: String, targets: List[Connection], label: String, value: Option[String], uid: Option[String])(
       implicit ec: ExecutionContext,
       timeout: Timeout): Future[HttpResponse] = {
     val from: String               = "agent://" + capFromSession(sessionUri)
     val selfcnxn: Connection       = Connection(from, from, "alias")
-    val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: targets, label, Some(value), Some(uid))
+    val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: targets, label, value, uid)
     val req: EvalSubscribeRequest  = EvalSubscribeRequest(sessionUri, EvalSubscribeExpression("insertContent", cont))
     httpPost(hc, uri, req)
   }
 
-  def makeQueryOnConnections(hc: ActorRef, uri: Uri, sessionUri: String, connections: List[Connection], lbl: String)(
+  def makeQueryOnConnections(hc: ActorRef, uri: Uri, sessionUri: String, connections: List[Connection], label: String)(
       implicit ec: ExecutionContext,
       timeout: Timeout): Future[HttpResponse] = {
     val from: String               = "agent://" + capFromSession(sessionUri)
     val selfcnxn: Connection       = Connection(from, from, "alias")
-    val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: connections, lbl, None, None)
+    val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: connections, label, None, None)
     val req: EvalSubscribeRequest  = EvalSubscribeRequest(sessionUri, EvalSubscribeExpression("feedExpr", cont))
     httpPost(hc, uri, req)
   }
@@ -186,6 +186,18 @@ trait ApiClient extends CapUtilities {
   def getConnectionProfiles(hc: ActorRef, uri: Uri, sessionId: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =
     httpPost(hc, uri, GetConnectionProfiles(sessionId)).map { (response: HttpResponse) =>
       response.entity.asString
+    }
+
+  def extractConnections(jArray: JArray)(implicit ec: ExecutionContext): Future[List[Connection]] =
+    Future {
+      jArray.arr.filter { (value: JValue) =>
+        (value \ "msgType").extract[String] == "connectionProfileResponse"
+      }.map { (value: JValue) =>
+        val source = (value \ "content" \ "connection" \ "source").extract[String]
+        val target = (value \ "content" \ "connection" \ "target").extract[String]
+        val label  = (value \ "content" \ "connection" \ "label").extract[String]
+        Connection(source, target, label)
+      }
     }
 
   def sessionPing(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[JArray] =
