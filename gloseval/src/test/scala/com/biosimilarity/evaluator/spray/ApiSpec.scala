@@ -198,12 +198,12 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           |"versionNumber":"1",
           |"allowForwarding":true,
           |"text":"Oh freddled gruntbuggly,
-          |Thy micturations are to me
-          |As plurdled gabbleblotchits on a lurgid bee.
-          |Groop, I implore thee, my foonting turlingdromes,
-          |And hooptiously drangle me with crinkly bindlewurdles,
-          |Or I will rend thee in the gobberwarts
-          |With my blurglecruncheon, see if I don't!",
+          | Thy micturations are to me
+          | As plurdled gabbleblotchits on a lurgid bee.
+          | Groop, I implore thee, my foonting turlingdromes,
+          | And hooptiously drangle me with crinkly bindlewurdles,
+          | Or I will rend thee in the gobberwarts
+          | With my blurglecruncheon, see if I don't!",
           |"subject":"Like being thrown out of an airlock"}}""".stripMargin.replace("\n", "")
 
       val eventualJArray: Future[JArray] =
@@ -238,7 +238,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
         val posts = jArray.arr.filter { (value: JValue) =>
           (value \ "msgType").extract[String] == "evalSubscribeResponse"
         }.foldLeft(List.empty[String]) { (acc: List[String], value: JValue) =>
-          (value \ "content" \ "pageOfPosts").extract[List[String]]
+          (value \ "content" \ "pageOfPosts").extract[List[String]] ++ acc
         }
 
         posts should contain(expected)
