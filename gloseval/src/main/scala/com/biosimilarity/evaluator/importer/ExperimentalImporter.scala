@@ -544,6 +544,7 @@ object ExperimentalImporter {
     val rslt = imp.importData(dataJson, email, password)
     imp.stop()
     println("Import file returning : " + rslt)
+    if (rslt == 0) imp.printStats()
     rslt
   }
 
