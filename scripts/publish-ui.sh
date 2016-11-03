@@ -37,7 +37,7 @@ echo ==============================================================
 echo Creating destination directory if it does not already exist...
 echo ==============================================================
 
-mkdir -p $publish_dir
+mkdir -p $publish_dir/assets
 
 echo
 echo ====================
@@ -46,7 +46,7 @@ echo ====================
 
 for a in ${js_assets[@]}; do
     echo Copying ${a}
-    cp ${a} $publish_dir
+    cp ${a} $publish_dir/assets
 done
 
 echo
@@ -56,7 +56,7 @@ echo =======================
 
 for a in ${other_assets[@]}; do
     echo Copying ${a}
-    cp -r ${a} $publish_dir
+    cp -r ${a} $publish_dir/assets
 done
 
 echo
@@ -64,4 +64,4 @@ echo ============================
 echo Manipulating other assets...
 echo ============================
 
-find $publish_dir/index.s.html -type f -exec mv {} $publish_dir/index.html \;
+find $publish_dir/assets/index.s.html -type f -exec mv {} $publish_dir/index.html \;
