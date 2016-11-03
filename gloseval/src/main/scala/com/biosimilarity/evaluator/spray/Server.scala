@@ -61,7 +61,7 @@ class Server(settings: ServerSettings, actorSystem: Option[ActorSystem] = None, 
       IO(Http)(as).ask(Http.CloseAll).onComplete { (_: Try[Any]) =>
         as.stop(IO(Http)(as))
         as.stop(la)
-        as.shutdown()
+        as.terminate()
       }
       new Server(settings)
     case (_, _) =>
