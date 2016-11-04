@@ -237,7 +237,107 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           (value \ "content" \ "pageOfPosts").extract[List[String]] ++ acc
         }
 
-        posts should contain(expected)
+        posts should contain(expectedJson)
+      }
+    }
+
+    /*
+     * Query Test Machinery
+     *
+     * ! HANDLE WITH CARE !
+     */
+
+    def constructPostValues(insertLabels: List[String]) =
+      insertLabels.zipWithIndex.foldLeft(List.empty[(String, String)]) { (acc: List[(String, String)], current: (String, Int)) =>
+        val currentNumber = current._2 + 1
+        val currentUid    = s"uid_$currentNumber"
+        (compact(
+           render(
+             ("uid" -> currentUid) ~
+               ("postContent" ->
+                 ("subject" -> s"Subject $currentNumber") ~
+                   ("text"  -> s"Text $currentNumber")))),
+         currentUid) :: acc
+      }
+
+    def dontPanic(insertLabels: List[String], queryLabel: String): Future[(JArray, List[String])] =
+      for {
+        uri                   <- Future(apiUri)
+        hc                    <- eventualHostConnector(system, uri.effectivePort, clientSSLEngineProvider)
+        isr                   <- openAdminSession(hc, uri, "admin@localhost", "a")
+        alice                 <- createSRPUser(hc, "alice@testing.com", "alice", "a")
+        bob                   <- createSRPUser(hc, "bob@testing.com", "bob", "b")
+        _                     <- makeConnection(hc, uri, isr.sessionURI, alice, bob, "alice_bob")
+        isrA                  <- openSRPSession(hc, uri, "alice@testing.com", "a")
+        spwnssnA              <- spawnSession(hc, uri, isrA.sessionURI)
+        _                     <- getConnectionProfiles(hc, uri, spwnssnA)
+        aliceConnectionsArray <- pingUntilPong(hc, uri, spwnssnA)
+        aliceConnections      <- extractConnections(aliceConnectionsArray)
+        postConnection        <- Future(aliceConnections.find((connection: Connection) => connection.label == "alice_bob").get)
+        labels                <- Future(insertLabels)
+        (posts, uids)         <- Future(constructPostValues(labels).unzip)
+        _                     <- makePosts(hc, uri, isrA.sessionURI, List(postConnection), labels, posts.map(Some.apply), uids.map(Some.apply))
+        isrB                  <- openSRPSession(hc, uri, "bob@testing.com", "b")
+        spwnssnB              <- spawnSession(hc, uri, isrB.sessionURI)
+        _                     <- getConnectionProfiles(hc, uri, spwnssnB)
+        bobConnectionsArray   <- pingUntilPong(hc, uri, spwnssnB)
+        bobConnections        <- extractConnections(bobConnectionsArray)
+        _                     <- makeQueryOnConnections(hc, uri, spwnssnB, bobConnections, queryLabel)
+        queryArray            <- pingUntilPong(hc, uri, spwnssnB)
+        _                     <- hc.ask(Http.CloseAll)
+      } yield (queryArray, posts)
+
+    def extractPosts(jArray: JArray): List[String] =
+      jArray.arr.filter { (value: JValue) =>
+        (value \ "msgType").extract[String] == "evalSubscribeResponse"
+      }.foldLeft(List.empty[String]) { (acc: List[String], value: JValue) =>
+        (value \ "content" \ "pageOfPosts").extract[List[String]] ++ acc
+      }
+
+    "respond with expected query results (each)" in {
+
+      val postLabels: List[String] = List("each([Vogon])", "each([Vogon],[Dent])", "each([Vogon])")
+
+      val query: String = "each([Dent])"
+
+      val results: Future[(JArray, List[String])] = dontPanic(postLabels, query)
+
+      whenReady(results) { (tuple: (JArray, List[String])) =>
+        println(pretty(render(tuple._1)))
+
+        val posts: List[String] = extractPosts(tuple._1)
+
+        posts.length shouldBe 1
+
+        val postUids: List[String] = posts.map { (s: String) =>
+          (parse(s) \ "uid").extract[String]
+        }
+
+        postUids should contain only "uid_2"
+      }
+    }
+
+    "respond with expected query results (any)" in {
+
+      val postLabels: List[String] =
+        List("all([Vogon])", "all([Vogon],[Dent],[Marvin])", "all([Vogon])", "all([Dent])", "all([Dent],[Marvin])")
+
+      val query: String = "any([Dent],[Vogon])"
+
+      val results: Future[(JArray, List[String])] = dontPanic(postLabels, query)
+
+      whenReady(results) { (tuple: (JArray, List[String])) =>
+        println(pretty(render(tuple._1)))
+
+        val posts: List[String] = extractPosts(tuple._1)
+
+        posts.length shouldBe 5
+
+        val postUids: List[String] = posts.map { (s: String) =>
+          (parse(s) \ "uid").extract[String]
+        }
+
+        postUids should contain only ("uid_1", "uid_2", "uid_3", "uid_4", "uid_5")
       }
     }
 

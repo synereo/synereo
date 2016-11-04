@@ -154,14 +154,36 @@ trait ApiClient extends CapUtilities {
     httpPost(hc, uri, cont)
   }
 
-  def makePost(hc: ActorRef, uri: Uri, sessionUri: String, targets: List[Connection], label: String, value: Option[String], uid: Option[String])(
-      implicit ec: ExecutionContext,
-      timeout: Timeout): Future[HttpResponse] = {
+  def makePost(hc: ActorRef,
+               uri: Uri,
+               sessionUri: String,
+               targets: List[Connection],
+               label: String,
+               value: Option[String],
+               uid: Option[String])(implicit ec: ExecutionContext, timeout: Timeout): Future[HttpResponse] = {
     val from: String               = "agent://" + capFromSession(sessionUri)
     val selfcnxn: Connection       = Connection(from, from, "alias")
     val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: targets, label, value, uid)
     val req: EvalSubscribeRequest  = EvalSubscribeRequest(sessionUri, EvalSubscribeExpression("insertContent", cont))
     httpPost(hc, uri, req)
+  }
+
+  def makePosts(hc: ActorRef,
+                uri: Uri,
+                sessionUri: String,
+                targets: List[Connection],
+                labels: List[String],
+                value: List[Option[String]],
+                uid: List[Option[String]])(implicit ec: ExecutionContext, timeout: Timeout): Future[List[HttpResponse]] = {
+    val from: String         = "agent://" + capFromSession(sessionUri)
+    val selfcnxn: Connection = Connection(from, from, "alias")
+    val eventualPosts: List[Future[HttpResponse]] = (labels, value, uid).zipped.toList.map {
+      (tuple: (String, Option[String], Option[String])) =>
+        val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: targets, tuple._1, tuple._2, tuple._3)
+        val req: EvalSubscribeRequest  = EvalSubscribeRequest(sessionUri, EvalSubscribeExpression("insertContent", cont))
+        httpPost(hc, uri, req)
+    }
+    Future.sequence(eventualPosts)
   }
 
   def makeQueryOnConnections(hc: ActorRef, uri: Uri, sessionUri: String, connections: List[Connection], label: String)(
