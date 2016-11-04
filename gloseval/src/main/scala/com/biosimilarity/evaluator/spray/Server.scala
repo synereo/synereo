@@ -6,9 +6,9 @@ import akka.pattern._
 import akka.util.Timeout
 import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.distribution.bfactory
-import com.biosimilarity.evaluator.omni.OmniClient
 import com.biosimilarity.evaluator.spray.SSLConfiguration._
 import com.biosimilarity.evaluator.spray.srp.SRPSessionManager
+import com.synereo.wallet.models.AMPKey
 import com.typesafe.config.{Config, ConfigFactory}
 import spray.can.Http
 import spray.can.server.ServerSettings
@@ -31,7 +31,7 @@ class Server(settings: ServerSettings, actorSystem: Option[ActorSystem] = None, 
       SRPSessionManager.reset()
       CompletionMapper.reset()
       bfactory.BFactoryMapInitializer.makeMap()
-      if (EvalConfigWrapper.isOmniRequired() && !OmniClient.canConnect()) throw new Exception("Unable to connect to OmniCore")
+      if (EvalConfigWrapper.isOmniRequired && !AMPKey.isHealthy) throw new Exception("Unable to connect to OmniCore")
       @transient
       val system: ActorSystem = ActorSystem("evaluator-system")
       @transient

@@ -72,6 +72,7 @@ case class InitializeSessionResponse(sessionURI: String,
                                      listOfAliases: List[String],
                                      listOfConnections: List[Connection],
                                      listOfLabels: List[String],
+                                     bitcoinNetworkMode: String,
                                      M2: String)
     extends ResponseContent
 case class CreateUserStep1Response(salt: String)                                                   extends ResponseContent

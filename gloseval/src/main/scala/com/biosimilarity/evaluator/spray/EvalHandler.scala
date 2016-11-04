@@ -31,7 +31,10 @@ import java.security._
 import java.util.UUID
 import java.net.{InetSocketAddress, URI}
 
+import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
 import com.biosimilarity.evaluator.spray.srp._
+import com.protegra_ati.agentservices.protocols.omni.msgs._
+import com.synereo.wallet.models.AMPKey
 import com.typesafe.config.ConfigFactory
 
 import scala.collection.mutable
@@ -71,6 +74,9 @@ object SessionManager extends Serializable {
 
   @transient
   private var sessionManager : Option[ActorContext] = None
+
+  @transient
+  private var monitoredTransactions = new mutable.HashMap[String, Seq[String]]()
 
   def reset(): Unit = {
     hmap = mutable.HashMap.empty[String, ActorRef]
@@ -122,6 +128,23 @@ object SessionManager extends Serializable {
           a
         case None => ssnactor
       }
+  }
+
+  def addMonitoredTransaction(tx: String, user: String) = {
+    val txs: Seq[String] = getUserTransactions(user) ++ Seq(tx)
+    monitoredTransactions += (user -> txs)
+  }
+
+  def removeMonitoredTransaction(tx: String, user: String) = {
+    val txs: Seq[String] = getUserTransactions(user)
+    if(txs.nonEmpty) monitoredTransactions += (user -> txs.filterNot(p => p.equals(tx)))
+  }
+
+  def getUserTransactions(user: String): Seq[String] = {
+    monitoredTransactions.get(user) match {
+      case None => Seq()
+      case Some(seq) => seq
+    }
   }
 }
 
@@ -592,6 +615,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   val labelListLabel = fromTermString("labelList(true)").getOrElse(throw new Exception("Couldn't parse labelListLabel"))
   val biCnxnsListLabel = fromTermString("biCnxnsList(true)").getOrElse(throw new Exception("Couldn't parse biCnxnsListLabel"))
   val ampWalletLabel = fromTermString("amp(walletRequest(W))").getOrElse(throw new Exception("Couldn't parse ampWalletLabel."))
+  val ampKeyLabel = fromTermString("pk(true)").getOrElse(throw new Exception("Couldn't parse ampKeyLabel."))
   /*
   val btcWalletLabel = fromTermString("btc(walletRequest(W))").getOrElse(throw new Exception("Couldn't parse btc(W)."))
   val btcWalletJSONLabel =
@@ -1075,6 +1099,69 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       })
   }
 
+  def listenOmniMessages: Unit = {
+
+    def handleRsp(v: ConcreteHL.HLExpr): Unit = {
+      v match {
+        case PostedExpr((PostedExpr(BalanceResponseMessage(sessionId, correlationId, address, amp, btc, errors)), _, _, _)) => {
+          println(s"Balance response message with sessionId = $sessionId and correlationId = $correlationId")
+          SessionManager.cometMessage(sessionId, compact(render(
+            ("msgType" -> "omniBalanceResponse") ~
+              ("content" ->
+                ("sessionURI" -> sessionId) ~
+                  ("address" -> address) ~
+                  ("amp" -> amp) ~
+                  ("btc" -> btc)))))
+        }
+        case PostedExpr((PostedExpr(SendAmpsResponseMessage(sessionId, correlationId, sender, receiver, transaction)), _, _, _)) => {
+          println(s"Transfer response message with sessionId = $sessionId and correlationId = $correlationId")
+          SessionManager.addMonitoredTransaction(transaction, sender)
+          SessionManager.addMonitoredTransaction(transaction, receiver)
+        }
+        case PostedExpr((PostedExpr(arg), _, _, _)) => {
+          println(s"Unexpected strange response : $arg")
+        }
+        case _ => {
+          println("Unrecognized response: " + v)
+        }
+      }
+    }
+
+    def doFeed(label: CnxnCtxtLabel[String, String, String]) = {
+    feed(
+      label,
+      Seq(omniWriteCnxn),
+      (optRsrc: Option[mTT.Resource]) => {
+        println(
+          s"""[listen OmniMessage | onFeed \n| cnxn : $omniWriteCnxn; \n| optRsrc = $optRsrc]""")
+
+        optRsrc match {
+          case None => ();
+          // colocated
+          case Some(mTT.Ground(Bottom)) => ()
+          // distributed
+          case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => ()
+          // colocated
+          case Some(mTT.Ground(v)) => {
+            handleRsp(v)
+          }
+          // distributed
+          case Some(mTT.RBoundHM(Some(mTT.Ground(v)), _)) => {
+            handleRsp(v)
+          }
+          case _ =>
+            println(
+              "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+                + "\nOmniMessage -- error : unrecognized resource"
+                + "\noptRsrc = " + optRsrc
+                + "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        }
+      })}
+
+    doFeed(BalanceResponseMessage.toLabel)
+    doFeed(SendAmpsResponseMessage.toLabel)
+  }
+
   // TODO: Replace function below with behavior
   def listenConnectNotification(sessionURIStr: String, aliasCnxn: PortableAgentCnxn): Unit = {
     import com.biosimilarity.evaluator.distribution.bfactory.BFactoryDefaultServiceContext._
@@ -1243,14 +1330,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     VerificationBehaviors().launchClaimantBehavior(aliasURI, feed _)
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(aliasURI, nodeAliasURI, feed _)
     VerificationBehaviors().launchVerificationAndRelyingPartyBehaviors(nodeAliasURI, aliasURI, feed _)
-
-    if (EvalConfigWrapper.isOmniRequired()) {
-      try {
-        omniCreateWallet(selfCnxn, optRsrc => BasicLogService.tweet("omniwallet created: " + optRsrc))
-      } catch {
-        case e : Throwable => BasicLogService.tweet("error creating omni account: " + e.getMessage)
-      }
-    }
   }
 
   def establishConnection(sessionURI: String, src: String, tgt: String, cnxnLabel: String) = {
@@ -2527,6 +2606,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                                     (optRsrc: Option[mTT.Resource]) => optRsrc match {
                                       case None => ()
                                       case Some(_) =>
+                                        storePrivKey(cap)
                                         onComplete(aliasCnxn)
                                     })
                               })
@@ -2559,6 +2639,19 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     //VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, agentMgr().feed _)
     VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, feed _)
+    commenceInstance(
+      omniProtocolCnxn,
+      omniLabel,
+      Seq(
+        omniReadCnxn,
+        omniWriteCnxn
+      ),
+      Seq(),
+      {
+        optRsrc =>
+          println("onCommencement omni | " + optRsrc)
+          BasicLogService.tweet("onCommencement omni | " + optRsrc)
+      })
   }
 
   def backupRequest(json: JValue): Unit = {
@@ -2889,7 +2982,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       val capSelfCnxn = getCapSelfCnxn(cap)
       val sessionURI = capToSession(cap)
       val uc = getSessionWithHash(pVal)
-      val m2Hex = uc.getM2Hex(pVal)
+      var m2Hex = ""
 
       def onLabelsFetch(jsonBlob: String, aliasList: String, defaultAlias: String, biCnxnList: String): Option[mTT.Resource] => Unit = (optRsrc) => {
         BasicLogService.tweet("initializeSessionStep2Request | onPwdFetch | onLabelsFetch: optRsrc = " + optRsrc)
@@ -2899,6 +2992,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               val aliasCnxn = getAliasCnxn(capURI.toString, defaultAlias)
               listenIntroductionNotification(sessionURI, aliasCnxn)
               listenConnectNotification(sessionURI, aliasCnxn)
+              listenOmniMessages
 
               val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
 
@@ -2910,6 +3004,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                   ("listOfConnections" -> biCnxnListObj.map(biCnxnToJObject(_))) ~ // for default alias
                   ("lastActiveLabel" -> "") ~
                   ("jsonBlob" -> parse(jsonBlob)) ~
+                  ("bitcoinNetworkMode" -> AMPKey.networkMode) ~
                   ("M2" -> m2Hex) // SRP parameter for client-side verification
 
               CompletionMapper.complete(key, compact(render(
@@ -2918,7 +3013,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
               SessionManager.startSession(sessionURI)  // register the session
               fetchAndSendConnectionProfiles(sessionURI, defaultAlias, biCnxnListObj)
-
+              if(EvalConfigWrapper.isOmniRequired) sendBalanceRequestMessage(sessionURI)
             }
             case Bottom => {
               CompletionMapper.complete(key, compact(render(
@@ -3083,6 +3178,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
       if(uc == null) completeWithError(key, errorMsgType, s"Authentication failed on server.")
       else {
+        m2Hex = uc.getM2Hex(pVal)
         fetch(jsonBlobLabel, List(capSelfCnxn), onJSONBlobFetch)
         ()
       }
@@ -3144,6 +3240,112 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     else eml
 
     (email, noconfirm, testtoken)
+  }
+
+  def storePrivKey(cap: String): Unit = {
+    if(EvalConfigWrapper.isOmniRequired) {
+      val capSelfCnxn = getCapSelfCnxn(cap)
+      try {
+        postToCnxnLabel(ampKeyLabel, capSelfCnxn, AMPKey(cap).privHex, optRsrc => {
+          println("EC key persisted: " + optRsrc)
+        })
+      } catch {
+        case e: Throwable =>
+          println(s"Error on creation EC key for user $cap")
+          e.printStackTrace()
+      }
+    }
+  }
+
+  def omniBalanceRequest(json: JObject): Unit = sendBalanceRequestMessage((json \ "sessionURI").extract[String])
+
+  def sendBalanceRequestMessage(sessionURI: String): Unit = {
+    val cap = capFromSession(sessionURI)
+    val capSelfCnxn = getCapSelfCnxn(cap)
+
+    try {
+      if(!EvalConfigWrapper.isOmniRequired) throw new Exception("Not supported")
+      fetchPrivKey(cap, hex =>
+        postOmniMessage(
+          BalanceRequestMessage.toLabel,
+          BalanceRequestMessage(sessionURI, UUID.randomUUID.toString, cap, hex)
+        ))
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        respondWithError(sessionURI, e.getMessage)
+    }
+  }
+
+  def sendAmpsRequest(json: JObject): Unit = {
+    val sessionURI = (json \ "sessionURI").extract[String]
+    val fromCap = capFromSession(sessionURI)
+    val toCap = (json \ "target").extract[String]
+    val amount = (json \ "amount").extract[String]
+
+    try {
+      if(!EvalConfigWrapper.isOmniRequired) throw new Exception("Not supported")
+      fetchPrivKey(fromCap, from => fetchPrivKey(toCap, to =>
+        postOmniMessage(
+          SendAmpsRequestMessage.toLabel,
+          SendAmpsRequestMessage(sessionURI, UUID.randomUUID.toString, fromCap, from, toCap, to, amount)
+        )
+      ))
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        respondWithError(sessionURI, e.getMessage)
+    }
+  }
+
+  def checkUserTransactions(sessionURI: String) = {
+    val user = capFromSession(sessionURI)
+    val confirmedTransactions = SessionManager.getUserTransactions(user).filter(tx => AMPKey.isConfirmed(tx))
+    if(confirmedTransactions.nonEmpty) {
+      confirmedTransactions.foreach(tx => SessionManager.removeMonitoredTransaction(tx, user))
+      listenOmniMessages
+      sendBalanceRequestMessage(sessionURI)
+    }
+  }
+
+  def fetchPrivKey(cap: String, onSuccess: String => Unit): Unit = {
+    val capSelfCnxn = getCapSelfCnxn(cap)
+    val handleRsp: Option[mTT.Resource] => Unit = (rsrc) => {
+      rsrc match {
+        case None =>
+          throw new Exception(s"EC Key not found for $cap.")
+        case Some(mTT.Ground(PostedExpr((PostedExpr(hex: String), _, _, _)))) =>
+          onSuccess(hex)
+        case Some(mTT.RBoundHM(Some(mTT.Ground(PostedExpr((PostedExpr(hex: String), _, _, _)))), _)) =>
+          onSuccess(hex)
+        case _ =>
+          throw new Exception(s"EC Key not found for $cap.")
+      }
+    }
+
+    fetch(ampKeyLabel, List(capSelfCnxn), handleRsp)
+  }
+
+  def postOmniMessage(label: CnxnCtxtLabel[String, String, String], msg: OmniMessage): Unit =
+    post(
+      label,
+      List(omniReadCnxn),
+      msg,
+      (optRsrc: Option[mTT.Resource]) => {
+        optRsrc match {
+          case None => ()
+          case _ => println("omni post: optRsrc = " + optRsrc)
+        }
+      }
+    )
+
+  def respondWithError(sessionURI: String, reason: String): Unit = {
+    def buildErrorResponse(reason: String): String =
+      compact(render(
+        ("msgType" -> "omniBalanceError") ~
+          ("content" -> ("reason" -> reason))))
+
+    SessionManager.cometMessage(sessionURI, buildErrorResponse(reason))
   }
 
   def omniGetBalance(json: JObject) : Unit = {

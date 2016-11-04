@@ -83,6 +83,8 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
     // Verifier protocol
     ("initiateClaim", initiateClaim),
     // omni
+    ("omniBalanceRequest", omniBalanceRequest),
+    ("sendAmpsRequest", sendAmpsRequest),
     ("omniGetBalance", omniGetBalance),
     ("omniTransfer", omniTransfer),
     ("getAmpWalletAddress", omniGetAmpWalletAddress),
@@ -101,7 +103,9 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
             ctx.complete(StatusCodes.Forbidden, "Invalid sessionURI parameter")
           case Some(cometActor) =>
             msgType match {
-              case "sessionPing"           => cometActor ! SessionActor.SessionPing(ctx)
+              case "sessionPing"           =>
+                checkUserTransactions(sessionURI)
+                cometActor ! SessionActor.SessionPing(ctx)
               case "closeSessionRequest"   => cometActor ! SessionActor.CloseSession(Some(ctx))
               case "startSessionRecording" => cometActor ! SessionActor.StartCamera(ctx)
               case "stopSessionRecording"  => cometActor ! SessionActor.StopCamera(ctx)

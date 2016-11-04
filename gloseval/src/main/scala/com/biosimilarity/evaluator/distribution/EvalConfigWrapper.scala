@@ -17,7 +17,7 @@ object EvalConfigWrapper extends EvalConfig with Serializable {
 
   def readList(param: String): List[String] = evalConfig().getStringList(param).toList
 
-  def isOmniRequired(): Boolean = Try(readString("OmniRPCURI")).isSuccess
+  def isOmniRequired: Boolean = Try(evalConfig().getBoolean("isOmniRequired")).getOrElse(false)
 
   def serverPort = readIntOrElse("serverPort", 80)
 

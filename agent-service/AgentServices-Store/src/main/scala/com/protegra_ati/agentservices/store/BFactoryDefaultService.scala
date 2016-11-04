@@ -100,5 +100,17 @@ package bfactory {
     @transient lazy val claimantLabel = storageLabels.fromTermString("claimant(true)").get
     @transient lazy val verifierLabel = storageLabels.fromTermString("verifier(true)").get
     @transient lazy val relyingPartyLabel = storageLabels.fromTermString("relyingParty(true)").get
-  }  
+
+    @transient
+    lazy val omniProtocolCnxn = new PortableAgentCnxn(
+      "omniProtocol".toURI,
+      "omniProtocol",
+      "omniProtocol".toURI
+    )
+    @transient lazy val omniLabel = storageLabels.fromTermString("omni(true)").get
+    @transient
+    lazy val omniReadCnxn = PortableAgentCnxn(new URI("ui://glosevalOmni"), "alias", new URI("ui://omniGloseval"))
+    @transient
+    lazy val omniWriteCnxn = PortableAgentCnxn(new URI("ui://glosevalOmni"), "alias", new URI("ui://omniGloseval"))
+  }
 }
