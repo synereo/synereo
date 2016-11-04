@@ -11,7 +11,8 @@ import com.biosimilarity.evaluator.spray.client.ApiClient
 import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.util._
 import com.biosimilarity.evaluator.util.mongo.MongoQuery
-import org.json4s.JsonAST.JValue
+import org.json4s.JsonAST.{JObject, JValue}
+import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization._
 import org.json4s.{BuildInfo => _, _}
@@ -185,26 +186,22 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       val uid   = "58bbeb443b4c4c0cbda82c99c3178e6e"
       val label = "each([Vogons])"
       val expected =
-        """{"$type":"shared.models.MessagePost",
-          |"uid":"58bbeb443b4c4c0cbda82c99c3178e6e",
-          |"created":"2016-09-16T17:17:52Z",
-          |"modified":"2016-09-16T17:18:43Z",
-          |"connections":[{}],
-          |"labels":"notused",
-          |"postContent":
-          |{"$type":"shared.models.MessagePostContent",
-          |"versionedPostId":"35e60447747e496aafde65ca182db1c8",
-          |"versionedPostPredecessorId":"",
-          |"versionNumber":"1",
-          |"allowForwarding":true,
-          |"text":"Oh freddled gruntbuggly,
-          | Thy micturations are to me
-          | As plurdled gabbleblotchits on a lurgid bee.
-          | Groop, I implore thee, my foonting turlingdromes,
-          | And hooptiously drangle me with crinkly bindlewurdles,
-          | Or I will rend thee in the gobberwarts
-          | With my blurglecruncheon, see if I don't!",
-          |"subject":"Like being thrown out of an airlock"}}""".stripMargin.replace("\n", "")
+        ("uid"        -> uid) ~
+          ("created"  -> "2016-09-16T17:17:52Z") ~
+          ("modified" -> "2016-09-16T17:18:43Z") ~
+          ("labels"   -> label) ~
+          ("postContent" ->
+            ("subject" -> "Like being thrown out of an airlock") ~
+              ("text" ->
+                """"Oh freddled gruntbuggly,
+                  | Thy micturations are to me
+                  | As plurdled gabbleblotchits on a lurgid bee.
+                  | Groop, I implore thee, my foonting turlingdromes,
+                  | And hooptiously drangle me with crinkly bindlewurdles,
+                  | Or I will rend thee in the gobberwarts
+                  | With my blurglecruncheon, see if I don't!""".stripMargin))
+
+      val expectedJson = compact(render(expected))
 
       val eventualJArray: Future[JArray] =
         for {
@@ -220,7 +217,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           aliceConnectionsArray <- pingUntilPong(hc, uri, spwnssnA)
           aliceConnections      <- extractConnections(aliceConnectionsArray)
           postConnection        <- Future(aliceConnections.find((connection: Connection) => connection.label == "alice_bob").get)
-          _                     <- makePost(hc, uri, isrA.sessionURI, List(postConnection), label, Some(expected), Some(uid))
+          _                     <- makePost(hc, uri, isrA.sessionURI, List(postConnection), label, Some(expectedJson), Some(uid))
           isrB                  <- openSRPSession(hc, uri, "bob@testing.com", "b")
           spwnssnB              <- spawnSession(hc, uri, isrB.sessionURI)
           _                     <- getConnectionProfiles(hc, uri, spwnssnB)
@@ -232,7 +229,6 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
         } yield queryArray
 
       whenReady(eventualJArray) { (jArray: JArray) =>
-
         println(pretty(render(jArray)))
 
         val posts = jArray.arr.filter { (value: JValue) =>
