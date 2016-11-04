@@ -159,11 +159,11 @@ trait ApiClient extends CapUtilities {
                sessionUri: String,
                targets: List[Connection],
                label: String,
-               value: Option[String],
-               uid: Option[String])(implicit ec: ExecutionContext, timeout: Timeout): Future[HttpResponse] = {
+               value: String,
+               uid: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[HttpResponse] = {
     val from: String               = "agent://" + capFromSession(sessionUri)
     val selfcnxn: Connection       = Connection(from, from, "alias")
-    val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: targets, label, value, uid)
+    val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: targets, label, Some(value), Some(uid))
     val req: EvalSubscribeRequest  = EvalSubscribeRequest(sessionUri, EvalSubscribeExpression("insertContent", cont))
     httpPost(hc, uri, req)
   }
@@ -173,13 +173,13 @@ trait ApiClient extends CapUtilities {
                 sessionUri: String,
                 targets: List[Connection],
                 labels: List[String],
-                value: List[Option[String]],
-                uid: List[Option[String]])(implicit ec: ExecutionContext, timeout: Timeout): Future[List[HttpResponse]] = {
+                value: List[String],
+                uid: List[String])(implicit ec: ExecutionContext, timeout: Timeout): Future[List[HttpResponse]] = {
     val from: String         = "agent://" + capFromSession(sessionUri)
     val selfcnxn: Connection = Connection(from, from, "alias")
     val eventualPosts: List[Future[HttpResponse]] = (labels, value, uid).zipped.toList.map {
-      (tuple: (String, Option[String], Option[String])) =>
-        val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: targets, tuple._1, tuple._2, tuple._3)
+      (tuple: (String, String, String)) =>
+        val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: targets, tuple._1, Some(tuple._2), Some(tuple._3))
         val req: EvalSubscribeRequest  = EvalSubscribeRequest(sessionUri, EvalSubscribeExpression("insertContent", cont))
         httpPost(hc, uri, req)
     }

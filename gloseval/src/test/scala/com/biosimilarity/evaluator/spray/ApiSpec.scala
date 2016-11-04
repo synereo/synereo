@@ -217,7 +217,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           aliceConnectionsArray <- pingUntilPong(hc, uri, spwnssnA)
           aliceConnections      <- extractConnections(aliceConnectionsArray)
           postConnection        <- Future(aliceConnections.find((connection: Connection) => connection.label == "alice_bob").get)
-          _                     <- makePost(hc, uri, isrA.sessionURI, List(postConnection), label, Some(expectedJson), Some(uid))
+          _                     <- makePost(hc, uri, isrA.sessionURI, List(postConnection), label, expectedJson, uid)
           isrB                  <- openSRPSession(hc, uri, "bob@testing.com", "b")
           spwnssnB              <- spawnSession(hc, uri, isrB.sessionURI)
           _                     <- getConnectionProfiles(hc, uri, spwnssnB)
@@ -247,20 +247,19 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
      * ! HANDLE WITH CARE !
      */
 
-    def constructPostValues(insertLabels: List[String]) =
-      insertLabels.zipWithIndex.foldLeft(List.empty[(String, String)]) { (acc: List[(String, String)], current: (String, Int)) =>
-        val currentNumber = current._2 + 1
-        val currentUid    = s"uid_$currentNumber"
-        (compact(
-           render(
-             ("uid" -> currentUid) ~
-               ("postContent" ->
-                 ("subject" -> s"Subject $currentNumber") ~
-                   ("text"  -> s"Text $currentNumber")))),
-         currentUid) :: acc
+    case class TestPost(uid: String, subject: String, text: String, label: String)
+
+    def constructPostsJsons(testPosts: List[TestPost]) =
+      testPosts.map { (current: TestPost) =>
+        compact(
+          render(
+            ("uid" -> current.uid) ~
+              ("postContent" ->
+                ("subject" -> s"Subject ${current.subject}") ~
+                  ("text"  -> s"Text ${current.text}"))))
       }
 
-    def dontPanic(insertLabels: List[String], queryLabel: String): Future[(JArray, List[String])] =
+    def dontPanic(testPosts: List[TestPost], queryLabel: String): Future[(JArray, List[String])] =
       for {
         uri                   <- Future(apiUri)
         hc                    <- eventualHostConnector(system, uri.effectivePort, clientSSLEngineProvider)
@@ -274,9 +273,9 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
         aliceConnectionsArray <- pingUntilPong(hc, uri, spwnssnA)
         aliceConnections      <- extractConnections(aliceConnectionsArray)
         postConnection        <- Future(aliceConnections.find((connection: Connection) => connection.label == "alice_bob").get)
-        labels                <- Future(insertLabels)
-        (posts, uids)         <- Future(constructPostValues(labels).unzip)
-        _                     <- makePosts(hc, uri, isrA.sessionURI, List(postConnection), labels, posts.map(Some.apply), uids.map(Some.apply))
+        posts                 <- Future(testPosts)
+        postsJsons            <- Future(constructPostsJsons(posts))
+        _                     <- makePosts(hc, uri, isrA.sessionURI, List(postConnection), posts.map(_.label), postsJsons, posts.map(_.uid))
         isrB                  <- openSRPSession(hc, uri, "bob@testing.com", "b")
         spwnssnB              <- spawnSession(hc, uri, isrB.sessionURI)
         _                     <- getConnectionProfiles(hc, uri, spwnssnB)
@@ -285,7 +284,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
         _                     <- makeQueryOnConnections(hc, uri, spwnssnB, bobConnections, queryLabel)
         queryArray            <- pingUntilPong(hc, uri, spwnssnB)
         _                     <- hc.ask(Http.CloseAll)
-      } yield (queryArray, posts)
+      } yield (queryArray, postsJsons)
 
     def extractPosts(jArray: JArray): List[String] =
       jArray.arr.filter { (value: JValue) =>
@@ -296,11 +295,14 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
     "respond with expected query results (each)" in {
 
-      val postLabels: List[String] = List("each([Vogon])", "each([Vogon],[Dent])", "each([Vogon])")
+      val testPosts: List[TestPost] = List(
+        TestPost("uid_0", "Subject 0", "Text 0", "each([Vogon])"),
+        TestPost("uid_1", "Subject 1", "Text 1", "each([Vogon],[Dent])"),
+        TestPost("uid_2", "Subject 2", "Text 2", "each([Vogon])"))
 
       val query: String = "each([Dent])"
 
-      val results: Future[(JArray, List[String])] = dontPanic(postLabels, query)
+      val results: Future[(JArray, List[String])] = dontPanic(testPosts, query)
 
       whenReady(results) { (tuple: (JArray, List[String])) =>
         println(pretty(render(tuple._1)))
@@ -313,18 +315,22 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           (parse(s) \ "uid").extract[String]
         }
 
-        postUids should contain only "uid_2"
+        postUids should contain only "uid_1"
       }
     }
 
     "respond with expected query results (any)" ignore {
 
-      val postLabels: List[String] =
-        List("all([Vogon])", "all([Vogon],[Dent],[Marvin])", "all([Vogon])", "all([Dent])", "all([Dent],[Marvin])")
+      val testPosts: List[TestPost] = List(
+        TestPost("uid_0", "Subject 0", "Text 0", "all([Vogon])"),
+        TestPost("uid_1", "Subject 1", "Text 1", "all([Vogon],[Dent],[Marvin])"),
+        TestPost("uid_2", "Subject 2", "Text 2", "all([Vogon])"),
+        TestPost("uid_3", "Subject 3", "Text 3", "all([Dent])"),
+        TestPost("uid_4", "Subject 4", "Text 4", "all([Dent],[Marvin])"))
 
       val query: String = "any([Dent],[Vogon])"
 
-      val results: Future[(JArray, List[String])] = dontPanic(postLabels, query)
+      val results: Future[(JArray, List[String])] = dontPanic(testPosts, query)
 
       whenReady(results) { (tuple: (JArray, List[String])) =>
         println(pretty(render(tuple._1)))
@@ -337,7 +343,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           (parse(s) \ "uid").extract[String]
         }
 
-        postUids should contain only ("uid_1", "uid_2", "uid_3", "uid_4", "uid_5")
+        postUids should contain only ("uid_0", "uid_1", "uid_2", "uid_3", "uid_4")
       }
     }
 
