@@ -10,9 +10,7 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 642AC823
 
 RUN echo "deb http://dl.bintray.com/sbt/debian /" > /etc/apt/sources.list.d/sbt.list
 
-RUN apt-get -qqy update
-
-RUN apt-get -qqy install curl git mongodb rabbitmq-server supervisor zulu-8 sbt
+RUN apt-get -qqy update && apt-get -qqy install curl git mongodb rabbitmq-server supervisor zulu-8 vim net-tools
 
 RUN /usr/lib/rabbitmq/lib/rabbitmq_server-2.7.1/sbin/rabbitmq-plugins enable rabbitmq_management
 
@@ -32,10 +30,6 @@ RUN chmod a+x /usr/local/bin/certbot-auto
 RUN adduser --disabled-password --gecos '' synereo && passwd -l synereo
 
 USER synereo
-
-WORKDIR /tmp
-RUN sbt update
-RUN rm -rf target
 
 WORKDIR /home/synereo
 

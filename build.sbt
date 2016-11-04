@@ -53,7 +53,7 @@ lazy val commonSettings = Seq(
   scalaVersion := ourScalaVersion,
   scalacOptions := commonOptions,
   autoCompilerPlugins := true,
-  git.baseVersion := "2.0",
+  git.baseVersion := "0.8",
   git.formattedShaVersion := git.gitHeadCommit.value.map { sha =>
     s"${git.baseVersion.value}-${sha.substring(0, 7)}"
   },
@@ -199,6 +199,9 @@ lazy val glosevalDockerSettings = Seq(
     Seq(
       Cmd("FROM", "synereo/base"),
       Cmd("ENV",
+        "EMAIL_AUTH_PASSWORD=Synereo52.38.13.42",
+        "EMAIL_AUTH_USERNAME=s52.38.13.42",
+        "EMAIL_FROM_ADDRESS=s52.38.13.42@gmail.com",
         "TWEET_LEVEL=warning",
         "BLOG_LEVEL=warning",
         "MODE=headed",
@@ -235,6 +238,8 @@ lazy val glosevalSettings = Seq(
   name := "GLoSEval",
   organization := "com.biosimilarity",
   libraryDependencies ++= glosevalDeps,
+  dockerRepository := Some("livelygig"),
+  dockerUpdateLatest := true,
   buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
   buildInfoPackage := "com.biosimilarity.evaluator",
   fork := true,
