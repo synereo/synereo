@@ -317,7 +317,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       }
     }
 
-    "respond with expected query results (any)" in {
+    "respond with expected query results (any)" ignore {
 
       val postLabels: List[String] =
         List("all([Vogon])", "all([Vogon],[Dent],[Marvin])", "all([Vogon])", "all([Dent])", "all([Dent],[Marvin])")
