@@ -215,9 +215,10 @@ trait ApiClient extends CapUtilities {
       jArray.arr.filter { (value: JValue) =>
         (value \ "msgType").extract[String] == "connectionProfileResponse"
       }.map { (value: JValue) =>
-        val source = (value \ "content" \ "connection" \ "source").extract[String]
-        val target = (value \ "content" \ "connection" \ "target").extract[String]
-        val label  = (value \ "content" \ "connection" \ "label").extract[String]
+        val cnxn = value \ "content" \ "connection"
+        val source = (cnxn \ "source").extract[String]
+        val target = (cnxn \ "target").extract[String]
+        val label  = (cnxn \ "label").extract[String]
         Connection(source, target, label)
       }
     }
