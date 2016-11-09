@@ -74,6 +74,15 @@ trait ApiClient extends CapUtilities {
       s
     }
 
+  def createTestUsers( hc: ActorRef, n: Int)(implicit ec: ExecutionContext, timeout: Timeout): Future[List[String]] = {
+    val evusers: List[Future[String]] = (0 to n ).toList.map { i => {
+        val s = i.toString
+        createSRPUser(hc, s + "@testing", "user_" + s, s)
+      }
+    }
+    Future.sequence(evusers)
+  }
+
   def createSRPUser(hc: ActorRef, email: String, username: String, password: String)(implicit ec: ExecutionContext,
                                                                                      timeout: Timeout): Future[String] =
     for {

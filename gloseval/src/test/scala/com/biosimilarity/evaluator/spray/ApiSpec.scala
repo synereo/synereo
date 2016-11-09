@@ -143,6 +143,27 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       }
     }
 
+    "allow administrator to create 1000 users" ignore {
+      val userCount = 300
+      val eventualJArray: Future[JArray] =
+        for {
+          uri      <- Future(apiUri)
+          hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          isr      <- openAdminSession(hc, uri, "admin@localhost", "a")
+          _        <- createTestUsers(hc, userCount)(ec, Timeout(7200, SECONDS))
+          spwnssn <- spawnSession(hc, uri, isr.sessionURI)
+          _        <- getConnectionProfiles(hc, uri, spwnssn)
+          jArray   <- pingUntilPong(hc, uri, spwnssn)
+          _        <- hc.ask(Http.CloseAll)
+        } yield jArray
+
+      whenReady(eventualJArray) { (ja: JArray) =>
+        //println(s"returned connections: ${pretty(render(ja))}")
+        ja.values.length shouldBe userCount + 2
+      } (PatienceConfig(timeout = Span(7200, Seconds)))
+
+    }
+
     "establish the correct number of connections" in {
 
       val eventualTuple: Future[(JArray, JArray, JArray)] =
