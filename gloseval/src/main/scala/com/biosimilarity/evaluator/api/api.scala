@@ -43,6 +43,7 @@ case class GetAmpWalletAddress(sessionURI: String)                              
 case class SetAmpWalletAddress(sessionURI: String, address: String)                                  extends RequestContent
 case class OmniTransfer(sessionURI: String, target: String, amount: BigDecimal)                      extends RequestContent
 case class OmniGetBalance(sessionURI: String)                                                        extends RequestContent
+case class OmniBalanceRequest(sessionURI: String)                                                    extends RequestContent
 
 sealed trait ResponseContent {
 
@@ -81,6 +82,7 @@ case class CreateUserWaiting(token: String)                                     
 case class ConnectionProfileResponse(sessionURI: String, connection: Connection, jsonBlob: JValue) extends ResponseContent
 case class InitializeSessionError(reason: String)                                                  extends ResponseContent
 case class ApiError(reason: String)                                                                extends ResponseContent
+case class OmniBalanceResponse(sessionURI: String , amp: String, btc: String, address: String)     extends ResponseContent
 
 case class Response(msgType: String, content: JObject) {
 
@@ -96,5 +98,6 @@ case class Response(msgType: String, content: JObject) {
     case "initializeSessionResponse"      => content.extract[InitializeSessionResponse]
     case "initializeSessionStep1Response" => content.extract[InitializeSessionStep1Response]
     case "versionInfoResponse"            => content.extract[VersionInfoResponse]
+    case "omniBalanceResponse"            => content.extract[OmniBalanceResponse]
   }
 }

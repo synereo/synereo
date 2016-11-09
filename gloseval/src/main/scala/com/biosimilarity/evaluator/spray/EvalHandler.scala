@@ -2639,19 +2639,16 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     //VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, agentMgr().feed _)
     VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, feed _)
-    commenceInstance(
-      omniProtocolCnxn,
-      omniLabel,
-      Seq(
-        omniReadCnxn,
-        omniWriteCnxn
-      ),
-      Seq(),
-      {
-        optRsrc =>
-          println("onCommencement omni | " + optRsrc)
-          BasicLogService.tweet("onCommencement omni | " + optRsrc)
-      })
+    if(EvalConfigWrapper.isOmniRequired)
+      commenceInstance(
+        omniProtocolCnxn,
+        omniLabel,
+        Seq(
+          omniReadCnxn,
+          omniWriteCnxn
+        ),
+        Seq(),
+        { optRsrc => BasicLogService.tweet("onCommencement omni | " + optRsrc)})
   }
 
   def backupRequest(json: JValue): Unit = {
@@ -2992,7 +2989,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               val aliasCnxn = getAliasCnxn(capURI.toString, defaultAlias)
               listenIntroductionNotification(sessionURI, aliasCnxn)
               listenConnectNotification(sessionURI, aliasCnxn)
-              listenOmniMessages
+              if(EvalConfigWrapper.isOmniRequired) listenOmniMessages
 
               val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
 

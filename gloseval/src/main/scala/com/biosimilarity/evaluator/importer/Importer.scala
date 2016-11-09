@@ -100,6 +100,7 @@ class Importer(host: URI) {
                         case "establishConnectionResponse" => ()
                         case "evalComplete" => ()
                         case "evalSubscribeResponse" => ()
+                        case "omniBalanceResponse" => ()
                         case _ =>
                           println("WARNING - handler not provided for server sent message type : " + typ)
                       }

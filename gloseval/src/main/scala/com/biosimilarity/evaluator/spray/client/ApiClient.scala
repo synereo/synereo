@@ -245,6 +245,12 @@ trait ApiClient extends CapUtilities {
       parseHttpResponseEntity(response).extract[JArray]
     }
 
+  def makeBalanceRequest(hc: ActorRef, uri: Uri, sessionUri: String)(
+    implicit ec: ExecutionContext, timeout: Timeout): Future[HttpResponse] = {
+    val req = OmniBalanceRequest(sessionUri)
+    httpPost(hc, uri, req)
+  }
+
   class Pingerator(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout) extends Iterator[JArray] {
 
     private def isPong(jValue: JValue): Boolean = (jValue \ "msgType").extract[String] == "sessionPong"
