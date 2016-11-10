@@ -15,7 +15,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import spray.http.Uri
 
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
-import scala.util.{Failure, Random, Success, Try}
+import scala.util.{Failure, Random, Success}
 
 class SimpleDualNodeTest extends ApiTests(Uri("https://localhost:9876/api"), trustfulClientSSLEngineProvider) with BeforeAndAfterAll {
 
@@ -45,7 +45,7 @@ class SimpleDualNodeTest extends ApiTests(Uri("https://localhost:9876/api"), tru
 
   override def withFixture(test: NoArgTest) = {
 
-    val destroyContainerAfterTest: AtomicBoolean = new AtomicBoolean(true)
+    val destroyContainerAfterTest: AtomicBoolean = new AtomicBoolean(false)
 
     val headlessName: String    = containerName() + s"-$Headless"
     val headedName: String      = containerName() + s"-$Headed"
@@ -96,26 +96,20 @@ class SimpleDualNodeTest extends ApiTests(Uri("https://localhost:9876/api"), tru
 
     try {
       logger.info("%-24s %s".format("Waiting for server:", headedName))
-      spinwaitOnServer(system, apiUri, FiniteDuration(5, SECONDS), 20)(ec, system.scheduler, timeout)
-
-      logger.info("%-24s %s".format("Waiting for quiescence:", headedName))
-      Thread.sleep(45000L)
-
+      quiescenceCheck(system, apiUri, FiniteDuration(5, SECONDS), 20, FiniteDuration(30, SECONDS))(ec, system.scheduler, timeout)
       logger.info("%-24s %s".format("Starting test:", test.name))
 
       super.withFixture(test) match {
         case Succeeded =>
           logger.info("%-24s %s".format("Test passed:", test.name))
+          destroyContainerAfterTest.set(true)
+          deleteNetworkAfterTests.set(true)
           Succeeded
         case failed: Failed =>
           logger.error("%-24s %s".format("Test failed:", test.name))
-          destroyContainerAfterTest.set(false)
-          deleteNetworkAfterTests.set(false)
           failed
         case other =>
           logger.error("%-24s %s".format("Unexpected test result", test.name))
-          destroyContainerAfterTest.set(false)
-          deleteNetworkAfterTests.set(false)
           other
       }
     } finally {

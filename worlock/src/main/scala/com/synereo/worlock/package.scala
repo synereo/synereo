@@ -112,7 +112,7 @@ package object worlock extends Network {
       for {
         name      <- Try(client.inspectContainerCmd(container.getId).exec().getName.substring(1))
         stopped   <- Try(client.stopContainerCmd(container.getId).exec()).map((_: Void) => true)
-        destroyed <- Try(client.removeContainerCmd(container.getId).exec()).map((_: Void) => true) if destroy
+        destroyed <- Try(if (destroy) { client.removeContainerCmd(container.getId).exec(); true } else false)
       } yield UsedContainer(name, stopped, destroyed)
     }.sequence
 }
