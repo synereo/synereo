@@ -86,7 +86,9 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
     ("omniGetBalance", omniGetBalance),
     ("omniTransfer", omniTransfer),
     ("getAmpWalletAddress", omniGetAmpWalletAddress),
-    ("setAmpWalletAddress", omniSetAmpWalletAddress)
+    ("setAmpWalletAddress", omniSetAmpWalletAddress),
+    // are we connected to another node?
+    ("checkConnectionRequest", checkConnectionRequest)
   )
 
   def handleAsyncPosts(ctx: RequestContext, msgType: String, content: JObject): Unit =

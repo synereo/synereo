@@ -20,6 +20,7 @@ sealed trait RequestContent {
 case object VersionInfoRequest extends RequestContent {
   override def asRequest: Request = Request("versionInfoRequest", this)
 }
+case class CheckConnectionRequest(sessionURI: String)                                                extends RequestContent
 case class ConfirmEmailToken(token: String)                                                          extends RequestContent
 case class CreateUserRequest(email: String, password: String, jsonBlob: JObject)                     extends RequestContent
 case class CreateUserStep1Request(email: String)                                                     extends RequestContent
@@ -64,6 +65,7 @@ case class VersionInfoResponse(glosevalVersion: String, scalaVersion: String, mo
                                       |MongoDB version: $mongoDBVersion
                                       |RabbitMQ version: $rabbitMQVersion""".stripMargin
 }
+case class CheckConnectionResponse(msg: String)                 extends ResponseContent
 case class InitializeSessionStep1Response(s: String, B: String) extends ResponseContent
 case class InitializeSessionResponse(sessionURI: String,
                                      defaultAlias: String,
@@ -95,5 +97,6 @@ case class Response(msgType: String, content: JObject) {
     case "initializeSessionResponse"      => content.extract[InitializeSessionResponse]
     case "initializeSessionStep1Response" => content.extract[InitializeSessionStep1Response]
     case "versionInfoResponse"            => content.extract[VersionInfoResponse]
+    case "checkConnectionResponse"        => content.extract[CheckConnectionResponse]
   }
 }

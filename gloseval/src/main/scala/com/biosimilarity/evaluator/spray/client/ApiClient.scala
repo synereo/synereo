@@ -245,24 +245,33 @@ trait ApiClient extends CapUtilities {
       parseHttpResponseEntity(response).extract[JArray]
     }
 
-  class Pingerator(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout) extends Iterator[JArray] {
+  class Pingerator(hc: ActorRef, uri: Uri, sessionUri: String, msgType: String)(implicit ec: ExecutionContext, timeout: Timeout)
+      extends Iterator[JArray] {
 
-    private def isPong(jValue: JValue): Boolean = (jValue \ "msgType").extract[String] == "sessionPong"
+    private def isMsgType(jValue: JValue): Boolean = (jValue \ "msgType").extract[String] == msgType
 
-    private var ponged = false
+    private var done = false
 
-    override def hasNext: Boolean = !ponged
+    override def hasNext: Boolean = !done
 
     override def next(): JArray = {
       val jArray: JArray = Await.result(sessionPing(hc, uri, sessionUri), timeout.duration)
-      ponged = jArray.arr.exists(isPong)
+      done = jArray.arr.exists(isMsgType)
       jArray
     }
   }
 
+  def pingUntilCheckConnectionResponse(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext,
+                                                                                   timeout: Timeout): Future[JArray] =
+    Future {
+      new Pingerator(hc, uri, sessionUri, "checkConnectionResponse").fold(JArray(Nil)) { (left: JArray, right: JArray) =>
+        JArray(left.arr ++ right.arr)
+      }
+    }
+
   def pingUntilPong(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[JArray] =
     Future {
-      new Pingerator(hc, uri, sessionUri).fold(JArray(Nil)) { (left: JArray, right: JArray) =>
+      new Pingerator(hc, uri, sessionUri, "sessionPong").fold(JArray(Nil)) { (left: JArray, right: JArray) =>
         JArray(left.arr ++ right.arr)
       }
     }

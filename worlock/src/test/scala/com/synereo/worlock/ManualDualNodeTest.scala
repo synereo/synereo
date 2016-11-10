@@ -6,12 +6,14 @@ import java.util.concurrent.atomic.AtomicReference
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.util.Timeout
+import com.biosimilarity.evaluator.api.CheckConnectionRequest
 import com.biosimilarity.evaluator.distribution.{Distributed, Headed, Headless}
 import com.biosimilarity.evaluator.spray.client.ApiClient
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.CreateContainerResponse
 import com.synereo.worlock.test._
-import org.json4s.JArray
+import org.json4s.{JArray, JValue}
+import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Second, Seconds, Span}
@@ -109,6 +111,27 @@ class ManualDualNodeTest extends WordSpec with ApiClient with Matchers with Scal
   val carolAgentURI: AtomicReference[String] = new AtomicReference[String]("")
 
   "The API" should {
+
+    "allow the administrator to check if a node is connected to another node" in {
+
+      val eventualJArray: Future[JArray] =
+        for {
+          uri    <- Future(apiUri)
+          hc     <- eventualHostConnector(system, uri.effectivePort, trustfulClientSSLEngineProvider)
+          uri    <- Future("/api")
+          isr    <- openAdminSession(hc, uri, "admin@localhost", "a")
+          _      <- httpPost(hc, uri, CheckConnectionRequest(isr.sessionURI))
+          jArray <- pingUntilCheckConnectionResponse(hc, uri, isr.sessionURI)(ec, Timeout(14, SECONDS))
+          _      <- hc.ask(Http.CloseAll)
+        } yield jArray
+
+      whenReady(eventualJArray) { (jArray: JArray) =>
+        println(pretty(render(jArray)))
+        assert(jArray.arr.exists { (value: JValue) =>
+          (value \ "msgType").extract[String] == "checkConnectionResponse"
+        })
+      }
+    }
 
     "allow the administrator to create two users, Alice and Bob, and connect them" in {
 

@@ -31,6 +31,7 @@ import java.security._
 import java.util.UUID
 import java.net.{InetSocketAddress, URI}
 
+import com.biosimilarity.evaluator.api.CheckConnectionResponse
 import com.biosimilarity.evaluator.spray.srp._
 import com.typesafe.config.ConfigFactory
 
@@ -2351,30 +2352,19 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     }
   }
 
-  def connectServers(key: String, sessionId: UUID): Unit = {
-    connectServers(sessionId)(
-      (optRsrc: Option[mTT.Resource]) => {
-        println("got response: " + optRsrc)
-        //BasicLogService.tweet( "got response: " + optRsrc )
-        optRsrc match {
-          case None => ()
-          case Some(rsrc) => CompletionMapper.complete(key, rsrc.toString)
-        }
-      })
-  }
-
-  def connectServers(sessionId: UUID)(
-    onConnection: Option[mTT.Resource] => Unit = //( optRsrc : Option[mTT.Resource] ) => { println( "got response: " + optRsrc ) }
-    (optRsrc: Option[mTT.Resource]) => { BasicLogService.tweet("got response: " + optRsrc) }): Unit = {
-    // val pulseErql = agentMgr().adminErql( sessionId )
-    //     val pulseErspl = agentMgr().adminErspl( sessionId )
-    //     ensureServersConnected(
-    //       pulseErql,
-    //       pulseErspl
-    //     )(
-    //       onConnection
-    //     )
-    throw new Exception("connect servers not implemented")
+  def checkConnectionRequest(json: JObject): Unit = {
+    val sessionURI = (json \ "sessionURI").extract[String]
+    def handler(optRsrc: Option[mTT.Resource]) =
+      optRsrc match {
+        case None =>
+          ()
+        case Some(rsrc) =>
+          SessionManager.cometMessage(
+            sessionURI,
+            Serialization.write(CheckConnectionResponse("hello out there").asResponse))
+      }
+    val (pulseErql, pulseErspl) = agentMgr().makePolarizedAdminPair()
+    ensureServersConnected(pulseErql, pulseErspl)(handler)
   }
 
   def createNodeUser(email: String, password: String, jsonBlob: String): Unit = {
