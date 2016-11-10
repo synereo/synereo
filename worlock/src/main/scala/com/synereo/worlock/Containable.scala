@@ -22,7 +22,7 @@ object Containable {
 
   implicit object containableNode extends Containable[Node] {
 
-    val imageName: String = s"gloseval:${BuildInfo.version}"
+    val imageName: String = s"synereo/synereo-node:${BuildInfo.version}"
 
     private val internalJVMDebugPort: Int         = 5005
     private val internalMongoPort: Int            = 27017

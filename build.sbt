@@ -193,6 +193,7 @@ lazy val glosevalDockerSettings = Seq(
     copyClientResources.in(Docker).value
     stage.in(Docker).value
   },
+  packageName := "synereo-node",
   dockerCommands := {
     val ip = "127.0.0.1"
     val port = "5672"
@@ -238,7 +239,7 @@ lazy val glosevalSettings = Seq(
   name := "GLoSEval",
   organization := "com.biosimilarity",
   libraryDependencies ++= glosevalDeps,
-  dockerRepository := Some("livelygig"),
+  dockerRepository := Some("synereo"),
   dockerUpdateLatest := true,
   buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
   buildInfoPackage := "com.biosimilarity.evaluator",
