@@ -14,7 +14,7 @@
 
 This is **experimental**, pre-release software and should be used **for testing purposes only**.
 
-While the software is in pre-release phase, there is a **high likelihood of data loss** and **features will change** without notice.
+While the software is in pre-release phase, there is a **high likelihood of data loss** and **features will change without notice**.
 
 ### Requirements
 * Basic knowledge of [Docker](https://www.docker.com)
@@ -57,7 +57,7 @@ Mac OSX| > 1.12 | `127.0.0.1` (aka `localhost`)
 Windows 10| - | `192.168.99.100` (aka `locahost`)
 Linux | - | `172.17.0.1`
 
-Alternately, on Linux and Windows, you can get the IP address of your running container using the following command:
+Alternatively, on Linux and Windows, you can get the IP address of your running container using the following command:
 ```sh
 docker inspect --format '{{ .NetworkSettings.IPAddress }}' synereo-node-01
 ```
