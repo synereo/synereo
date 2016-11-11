@@ -52,9 +52,9 @@ To access the application, you must first know the IP address of your running co
 
 OS|Docker Version |Default IP Address
 --------|--------|--------
-Mac OSX| < 1.12 | `192.168.99.100`
-Mac OSX| > 1.12 | `127.0.0.1` (aka `localhost`)
-Windows 10| - | `192.168.99.100` (aka `locahost`)
+OS X| < 1.12 | `192.168.99.100`
+OS X| > 1.12 | `127.0.0.1` (aka `localhost`)
+Windows| - | `192.168.99.100` (aka `locahost`)
 Linux | - | `172.17.0.1`
 
 Alternatively, on Linux and Windows, you can get the IP address of your running container using the following command (this IP may not be used to access the application):
