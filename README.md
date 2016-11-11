@@ -5,10 +5,10 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/8hxpx6mwmi5b8g58/branch/staging?svg=true)](https://ci.appveyor.com/project/henrytill/synereo/branch/staging)
 
 ### Contents:
-* [Instructions for Users](#instructions-for-users)
+* [Instructions for running a Synereo node](#instructions-for-running-a-synereo-node)
 * [Instructions for Developers](#instructions-for-developers)
 
-## Instructions for Users
+## Instructions for running a Synereo node
 
 #### WARNING
 
@@ -23,6 +23,7 @@ While the software is in pre-release phase, there is a **high likelihood of data
   * For Linux users, installation information is [available here](https://docs.docker.com/engine/installation/linux)
   * For Mac users, system requirements and installation information is [available here](https://docs.docker.com/docker-for-mac/)
   * For Windows users, system requirements and installation information is [available here](https://docs.docker.com/docker-for-windows/)
+  * Gmail based email id
 
 ### Installation
 
@@ -35,37 +36,37 @@ docker pull synereo/synereo-node
 
 ### First Time Usage
 
-After the build completes, run the following command:
+After the build completes, run the following command (Please update EMAIL_AUTH_USERNAME, EMAIL_AUTH_PASSWORD and EMAIL_FROM_ADDRESS with valid Gmail based email id and this is required. The password is clear text at this moment and use with caution - You may create a new Gmail id for this purpose. For example, if id is "s52.38.13.42@gmail.com" then - EMAIL_AUTH_USERNAME=s52.38.13.42, EMAIL_AUTH_PASSWORD=validpassword and EMAIL_FROM_ADDRESS=s52.38.13.42@gmail.com
+):
 ```sh
-docker run -it -p 443:9876 -h mynodehost --dns 8.8.8.8 -d synereo/synereo-node --name synereo-node-01
+docker run -it -p 443:9876 -h mynodehost --dns 8.8.8.8 -e EMAIL_AUTH_USERNAME=[change_me] -e EMAIL_AUTH_PASSWORD=[change_me] -e EMAIL_FROM_ADDRESS=[chamge_metoo]@gmail.com -d synereo/synereo-node --name synereo-node-01
 ```
 
 **NOTE**:
 
-The names `mynodehost` and `synereo-node-01` are arbitrary.
-
-You may use whatever name you prefer for these settings.
+The names `mynodehost` and `synereo-node-01` are arbitrary. You may use whatever name you prefer for these settings and refer them accordingly if needed.
 
 ### Accessing the Synereo Social Platform
 
 To access the application, you must first know the IP address of your running container.
 
-OS|Docker Version |Default IP
+OS|Docker Version |Default IP Address
 --------|--------|--------
 Mac OSX| < 1.12 | `192.168.99.100`
 Mac OSX| > 1.12 | `127.0.0.1` (aka `localhost`)
 Windows 10| - | `192.168.99.100` (aka `locahost`)
 Linux | - | `172.17.0.1`
 
-Alternatively, on Linux and Windows, you can get the IP address of your running container using the following command:
+Alternatively, on Linux and Windows, you can get the IP address of your running container using the following command (this IP may not be used to access the application):
 ```sh
 docker inspect --format '{{ .NetworkSettings.IPAddress }}' synereo-node-01
 ```
 
 You can then access the application with your web browser at:
 ```
-https://<IP address>/
+https://<Deafult IP Address>/
 ```
+For example: https://172.17.0.1/ or https://localhost/ or https://192.168.99.100/ depending upon underlying OS.
 
 **NOTE**: When accessing the application for the first time, your browser will warn you that the site is insecure.  This happens because the pre-release version of this software uses a self-signed TLS certificate.  You should follow your browser's instructions about approving the site's certificate.
 
@@ -74,6 +75,8 @@ https://<IP address>/
 Username|Password
 --------|--------
 admin@localhost|a
+
+Or follow instructions to register as a new user [here](https://github.com/synereo/docs/wiki/Registering-as-a-new-user)
 
 **NOTE**: This username and password can be changed by editing the `eval.conf` file inside the running container.
 
