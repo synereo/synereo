@@ -8,6 +8,8 @@
 
 package com.biosimilarity.evaluator.distribution
 
+import java.net.InetSocketAddress
+
 import com.biosimilarity.lift.model.ApplicationDefaults
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.model.store.xml._
@@ -15,6 +17,7 @@ import com.biosimilarity.lift.model.store.xml._
 import com.biosimilarity.lift.model.agent._
 import com.biosimilarity.lift.model.msg._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.uri._
 import com.biosimilarity.lift.lib.moniker._
 import net.liftweb.amqp._
 
@@ -537,13 +540,8 @@ trait DSLCommLinkConfiguration {
   def clientHostsNPorts() : List[(String,Int)] = {
     try {
       evalConfig().getString("DSLCommLinkClientHosts").split(',').toList.map { (s: String) =>
-        val uri = new URI("unused://" + s.trim)
-        val host: String = Option(uri.getHost).getOrElse("localhost")
-        val port: Int    = uri.getPort match {
-          case -1 => 5672
-          case x  => x
-        }
-        (host, port)
+        val inetSocketAddress: InetSocketAddress = parseInetSocketAddress(s, "localhost", 5672)
+        (inetSocketAddress.getAddress.toString.substring(1), inetSocketAddress.getPort)
       }
     }
     catch {
