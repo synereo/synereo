@@ -200,6 +200,7 @@ lazy val glosevalDockerSettings = Seq(
     Seq(
       Cmd("FROM", "synereo/base"),
       Cmd("ENV",
+        "EMAIL_SMTP_SERVER=smtp.googlemail.com",
         "EMAIL_AUTH_PASSWORD=Synereo52.38.13.42",
         "EMAIL_AUTH_USERNAME=s52.38.13.42",
         "EMAIL_FROM_ADDRESS=s52.38.13.42@gmail.com",

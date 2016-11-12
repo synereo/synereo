@@ -15,6 +15,7 @@ import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.util._
 import com.biosimilarity.lift.model.store._
 import com.biosimilarity.lift.lib._
+import com.biosimilarity.lift.lib.uri._
 import com.biosimilarity.evaluator.spray.agent.{ExternalIdType, ExternalIdentity}
 import akka.actor._
 import com.biosimilarity.evaluator.omni.OmniClient
@@ -28,7 +29,7 @@ import javax.crypto._
 import javax.crypto.spec._
 import java.security._
 import java.util.UUID
-import java.net.URI
+import java.net.{InetSocketAddress, URI}
 
 import com.biosimilarity.evaluator.spray.srp._
 import com.typesafe.config.ConfigFactory
@@ -130,16 +131,19 @@ object btcKeyMapper extends Serializable {
 }
 
 object ConfirmationEmail extends Serializable {
+  val EMAIL_SMTP_SERVER   = EvalConfigWrapper.readString("EmailSMTPServer")
   val EMAIL_AUTH_USERNAME = EvalConfigWrapper.readString("EmailAuthUsername")
   val EMAIL_AUTH_PASSWORD = EvalConfigWrapper.readString("EmailAuthPassword")
   val EMAIL_FROM_ADDRESS  = EvalConfigWrapper.readString("EmailFromAddress")
+
+  val smtpServer: InetSocketAddress = parseInetSocketAddress(EMAIL_SMTP_SERVER, "localhost", 465)
 
   def confirm(email: String, token: String) = {
     import org.apache.commons.mail._
 
     val simple = new SimpleEmail()
-    simple.setHostName("smtp.googlemail.com")
-    simple.setSmtpPort(465)
+    simple.setHostName(smtpServer.getHostName)
+    simple.setSmtpPort(smtpServer.getPort)
     simple.setAuthenticator(new DefaultAuthenticator(EMAIL_AUTH_USERNAME, EMAIL_AUTH_PASSWORD))
     simple.setSSLOnConnect(true)
     simple.setFrom(EMAIL_FROM_ADDRESS)
