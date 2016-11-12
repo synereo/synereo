@@ -57,7 +57,7 @@ OS|Docker Version |Default IP Address
 --------|--------|--------
 OS X| < 1.12 | `192.168.99.100`
 OS X| > 1.12 | `127.0.0.1` (aka `localhost`)
-Windows| - | `192.168.99.100` (aka `locahost`)
+Windows| - | `192.168.99.100` (aka `localhost`)
 Linux | - | `172.17.0.1`
 
 Alternatively, on Linux, you can get the IP address of your running container using the following command:
