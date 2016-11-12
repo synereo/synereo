@@ -30,13 +30,14 @@ echo =============================
 echo Generating assets with SBT...
 echo =============================
 
-sbt -v ";assets ;fullOptJS"
+sbt -v ";clean ;assets ;fullOptJS"
 
 echo
 echo ==============================================================
 echo Creating destination directory if it does not already exist...
 echo ==============================================================
 
+rm -r $publish_dir/*
 mkdir -p $publish_dir/assets
 
 echo
