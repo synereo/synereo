@@ -35,19 +35,37 @@ docker pull synereo/synereo-node
 
 ### First Time Usage
 
-After pulling the image, run the following command:
+After pulling the image, run the following command, substituting `<parts-like-this>` with meaningful values:
 ```sh
 docker run -itd -p 443:9876 \
-  -e EMAIL_AUTH_USERNAME=<invitation-email-username>
-  -e EMAIL_AUTH_PASSWORD=<invitation-email-password>
-  -e EMAIL_FROM_ADDRESS=<invitation-email-address>
-  --name <container-name>
+  -e EMAIL_SMTP_SERVER=<invitation-email-smtp-server> \
+  -e EMAIL_AUTH_USERNAME=<invitation-email-username> \
+  -e EMAIL_AUTH_PASSWORD=<invitation-email-password> \
+  -e EMAIL_FROM_ADDRESS=<invitation-email-address> \
+  --dns <dns-server> \
+  --name <container-name> \
   synereo/synereo-node
 ```
 
-You must replace `<invitation-email-username>`, `<invitation-email-password>`, and `<invitation-email-address>` with meaningful values.
-
-The value for `<container-name>` can be any name of your choosing.  We chose `synereo-node-01`.
+**Guide to meaningful values:**:
+* `<invitation-email-smtp-server>`
+  * **Description:** `<HOST>:<PORT>` of the SMTP server for the email address from which your node should send invitations
+  * **Example value:** `smtp.googlemail.com:465`
+* `<invitation-email-username>`
+  * **Description:** Username for the email address from which your node should send invitations
+  * **Example value:** `alice.the.node.operator`
+* `<invitation-email-password>`
+  * **Description:** Password for the email address from which your node should send invitations
+  * **Example value:** `thisismyterriblepassword`
+* `<invitation-email-address>`
+  * **Description:** Email address from which your node should send invitations
+  * **Example value:** `alice.the.node.operator@gmail.com`
+* `<dns-server>`
+  * **Description:** Domain Name Server for your node to use to send its email invitations
+  * **Example value:** `8.8.8.8`
+* `<container-name>`
+  * **Description:** A name for Docker to give to your node's container, so that you can easily refer to the container with other commands
+  * **Example value:** `synereo-node-01`
 
 ### Accessing the Synereo Social Platform
 
@@ -92,7 +110,7 @@ To register as a new user, see the instructions [here](https://github.com/synere
 To stop the container:
 
 ```sh
-docker stop synereo-node-01
+docker stop <container-name>
 ```
 
 ### General Usage
@@ -100,7 +118,7 @@ docker stop synereo-node-01
 To restart the container:
 
 ```sh
-docker start synereo-node-01
+docker start <container-name>
 ```
 
 ### Further Help
