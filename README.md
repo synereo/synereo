@@ -5,10 +5,10 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/8hxpx6mwmi5b8g58/branch/staging?svg=true)](https://ci.appveyor.com/project/henrytill/synereo/branch/staging)
 
 ### Contents:
-* [Instructions for running a Synereo node](#instructions-for-running-a-synereo-node)
+* [Instructions for Running a Synereo Node](#instructions-for-running-a-synereo-node)
 * [Instructions for Developers](#instructions-for-developers)
 
-## Instructions for running a Synereo node
+## Instructions for Running a Synereo Node
 
 #### WARNING
 
@@ -23,7 +23,6 @@ While the software is in pre-release phase, there is a **high likelihood of data
   * For Linux users, installation information is [available here](https://docs.docker.com/engine/installation/linux)
   * For Mac users, system requirements and installation information is [available here](https://docs.docker.com/docker-for-mac/)
   * For Windows users, system requirements and installation information is [available here](https://docs.docker.com/docker-for-windows/)
-  * Gmail based email id
 
 ### Installation
 
@@ -36,15 +35,19 @@ docker pull synereo/synereo-node
 
 ### First Time Usage
 
-After the build completes, run the following command (Please update EMAIL_AUTH_USERNAME, EMAIL_AUTH_PASSWORD and EMAIL_FROM_ADDRESS with valid Gmail based email id and this is required. The password is clear text at this moment and use with caution - You may create a new Gmail id for this purpose. For example, if id is "s52.38.13.42@gmail.com" then - EMAIL_AUTH_USERNAME=s52.38.13.42, EMAIL_AUTH_PASSWORD=validpassword and EMAIL_FROM_ADDRESS=s52.38.13.42@gmail.com
-):
+After pulling the image, run the following command:
 ```sh
-docker run -it -p 443:9876 -h mynodehost --dns 8.8.8.8 -e EMAIL_AUTH_USERNAME=[change_me] -e EMAIL_AUTH_PASSWORD=[change_me] -e EMAIL_FROM_ADDRESS=[chamge_metoo]@gmail.com -d synereo/synereo-node --name synereo-node-01
+docker run -itd -p 443:9876 \
+  -e EMAIL_AUTH_USERNAME=<invitation-email-username>
+  -e EMAIL_AUTH_PASSWORD=<invitation-email-password>
+  -e EMAIL_FROM_ADDRESS=<invitation-email-address>
+  --name <container-name>
+  synereo/synereo-node
 ```
 
-**NOTE**:
+You must replace `<invitation-email-username>`, `<invitation-email-password>`, and `<invitation-email-address>` with meaningful values.
 
-The names `mynodehost` and `synereo-node-01` are arbitrary. You may use whatever name you prefer for these settings and refer them accordingly if needed.
+The value for `<container-name>` can be any name of your choosing.  We chose `synereo-node-01`.
 
 ### Accessing the Synereo Social Platform
 
@@ -57,16 +60,20 @@ OS X| > 1.12 | `127.0.0.1` (aka `localhost`)
 Windows| - | `192.168.99.100` (aka `locahost`)
 Linux | - | `172.17.0.1`
 
-Alternatively, on Linux and Windows, you can get the IP address of your running container using the following command (this IP may not be used to access the application):
+Alternatively, on Linux, you can get the IP address of your running container using the following command:
 ```sh
 docker inspect --format '{{ .NetworkSettings.IPAddress }}' synereo-node-01
 ```
 
 You can then access the application with your web browser at:
 ```
-https://<Deafult IP Address>/
+https://<Default IP Address>/
 ```
-For example: https://172.17.0.1/ or https://localhost/ or https://192.168.99.100/ depending upon underlying OS.
+
+For example, on Windows this would be: 
+```
+https://192.168.99.100/
+```
 
 **NOTE**: When accessing the application for the first time, your browser will warn you that the site is insecure.  This happens because the pre-release version of this software uses a self-signed TLS certificate.  You should follow your browser's instructions about approving the site's certificate.
 
@@ -76,7 +83,7 @@ Username|Password
 --------|--------
 admin@localhost|a
 
-Or follow instructions to register as a new user [here](https://github.com/synereo/docs/wiki/Registering-as-a-new-user)
+To register as a new user, see the instructions [here](https://github.com/synereo/docs/wiki/Registering-as-a-new-user).
 
 **NOTE**: This username and password can be changed by editing the `eval.conf` file inside the running container.
 
