@@ -147,9 +147,8 @@ object ConfirmationEmail extends Serializable {
     simple.setAuthenticator(new DefaultAuthenticator(EMAIL_AUTH_USERNAME, EMAIL_AUTH_PASSWORD))
     simple.setSSLOnConnect(true)
     simple.setFrom(EMAIL_FROM_ADDRESS)
-    simple.setSubject("Confirm splicious agent signup")
-    // TODO(mike): get the URL from a config file
-    simple.setMsg("""Your token is: """ + token)
+    simple.setSubject("Here is your Synereo verification token")
+    simple.setMsg(s"Your token is: $token")
     simple.addTo(email)
     simple.send()
   }
