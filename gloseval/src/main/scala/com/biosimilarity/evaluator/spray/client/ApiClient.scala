@@ -84,11 +84,15 @@ trait ApiClient extends CapUtilities {
   }
 
   def createSRPUser(hc: ActorRef, email: String, username: String, password: String)(implicit ec: ExecutionContext,
+                                                                                     timeout: Timeout): Future[String] = {
+    val uri = Uri("/api")  //@@GS  wtf???
+    createUser(hc, uri, email, password, JObject(("name", JString(username)) :: Nil))
+  }
+
+  def createUser(hc: ActorRef, uri: Uri, email: String, password: String, blob: JObject)(implicit ec: ExecutionContext,
                                                                                      timeout: Timeout): Future[String] =
     for {
       srpClient <- eventualSRPClient()
-      uri       <- Future("/api")
-      blob      <- Future(JObject(("name", JString(username)) :: Nil))
       nce       <- Future(s"noConfirm:$email")
       resp1     <- httpPost(hc, uri, CreateUserStep1Request(nce))
       salt      <- processCreateUserStep1Response(resp1, srpClient, email, password)
@@ -138,6 +142,11 @@ trait ApiClient extends CapUtilities {
       (parseHttpResponseEntity(response) \ "content" \ "sessionURI").extract[String]
     }
 
+  def closeSession(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =
+    httpPost(hc, uri, CloseSessionRequest(sessionUri)).map { (response: HttpResponse) =>
+      (parseHttpResponseEntity(response) \ "content" \ "sessionURI").extract[String]
+    }
+
   def startCam(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =
     httpPost(hc, uri, StartSessionRecording(sessionUri)).map((response: HttpResponse) => sessionUri)
 
@@ -151,15 +160,20 @@ trait ApiClient extends CapUtilities {
   def capFromAgentUri(agent: String): String =
     agent.replace("agent://cap/", "").slice(0, 36)
 
-  def makeAliasUri(agent: String): String =
-    s"alias://${capFromAgentUri(agent)}/alias"
+  def makeAliasUri(agent: String, alias: String = "alias"): String =
+    s"alias://${capFromAgentUri(agent)}/$alias"
 
   def makeConnection(hc: ActorRef, uri: Uri, sessionUri: String, agentL: String, agentR: String, cnxnLabel: String)(
-      implicit ec: ExecutionContext,
-      timeout: Timeout): Future[HttpResponse] = {
+    implicit ec: ExecutionContext,
+    timeout: Timeout): Future[HttpResponse] = {
     val sourceUri: String                = makeAliasUri(agentL)
     val targetUri: String                = makeAliasUri(agentR)
     val cont: EstablishConnectionRequest = EstablishConnectionRequest(sessionUri, sourceUri, targetUri, cnxnLabel)
+    httpPost(hc, uri, cont)
+  }
+
+  def addAliasLabels(hc: ActorRef, uri: Uri, sessionUri: String, alias: String, labels: List[String])(implicit ec: ExecutionContext,   timeout: Timeout): Future[HttpResponse] = {
+    val cont = AddAliasLabelsRequest(sessionUri, alias, labels)
     httpPost(hc, uri, cont)
   }
 
