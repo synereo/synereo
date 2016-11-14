@@ -1,20 +1,22 @@
 package com.synereo.wallet
 
+import java.math.BigDecimal
 import javax.xml.bind.DatatypeConverter
+
 import foundation.omni.OmniDivisibleValue
 import foundation.omni.tx.OmniTxBuilder
 import com.synereo.wallet.config.RPCConfiguration
 import com.synereo.wallet.models._
 import org.bitcoinj.core._
-import scala.collection.JavaConversions._
 
+import scala.collection.JavaConversions._
 import scala.util.{Failure, Success, Try}
 
 trait OmniAPI extends RPCConfiguration {
 
   def getReceiveAddress(str: String): Address = Address.fromBase58(networkParams, str)
 
-  def getAmpValue(amount: BigDecimal) = OmniDivisibleValue.of(amount.bigDecimal)
+  def getAmpValue(amount: String) = OmniDivisibleValue.of(new BigDecimal(amount))
 
   def newECKey: ECKey = new ECKey()
 
@@ -30,15 +32,19 @@ trait OmniAPI extends RPCConfiguration {
         errors = e.getMessage :: errors
         "0.00"
     }
-    var sumBTC: Long = 0L
-    omniClient.listUnspentJ(address).toList.foreach(p => sumBTC += p.getValue.value)
+    val btcs = Try(omniClient.getBitcoinBalance(address)) match {
+      case Success(coin) => coin.toPlainString
+      case Failure(e) =>
+        errors = e.getMessage :: errors
+        "0.00"
+    }
 
-    BalanceSummary(address.toBase58, amps, Coin.valueOf(sumBTC).toPlainString, errors)
+    BalanceSummary(address.toBase58, amps, btcs, errors)
   }
 
-  def transfer(from: AMPKey, toAddress: Address, amount: BigDecimal): String = {
+  def transfer(from: AMPKey, toAddress: Address, amount: String): String = {
     val fromAddress = from.address
-    val omniAmount = getAmpValue(amount.bigDecimal)
+    val omniAmount = getAmpValue(amount)
     val outputs = omniClient.listUnspentJ(fromAddress).toList
       .filter(p => p.getValue.value > 3000L)
     val builder = new OmniTxBuilder(networkParams)
@@ -50,10 +56,27 @@ trait OmniAPI extends RPCConfiguration {
     omniClient.sendRawTransaction(tx).toString
   }
 
-  def isConfirmed(hashStr: String) = omniClient.getTransaction(Sha256Hash.wrap(hashStr)).getConfirmations >= MIN_NUM_OF_CONFIRMATIONS
+  def isConfirmed(hashStr: String) = {
+    val tx = omniClient.send[java.util.LinkedHashMap[String, Any]]("gettransaction", hashStr)
 
-  def importAddress(addr: String): String = omniClient.send[String]("importaddress", addr, "", java.lang.Boolean.FALSE)
+    tx.get("confirmations") match {
+      case c: java.lang.Integer => c >= MIN_NUM_OF_CONFIRMATIONS
+      case _ => false
+    }
+  }
 
-  def isAddressImported(addr: String) = omniClient.send[java.util.List[String]]("getaddressesbyaccount", "").contains(addr)
+  def importAddress(addr: String): String =
+    omniClient.send[String]("importaddress", addr, "", java.lang.Boolean.FALSE)
+
+  def isAddressImported(addr: String) =
+    omniClient.send[java.util.List[String]]("getaddressesbyaccount", "").contains(addr)
+
+  def setGenerate = omniClient.setGenerate(true, 1L)
+
+  def receiveBTC(address: Address, amount: String): String =
+    omniClient.sendFrom("", address, Coin.parseCoin(amount)).toString
+
+  def receiveAMP(address: Address, amount: String) =
+    omniClient.omniSend(getReceiveAddress(omniWalletAddress), address, ampsID, getAmpValue(amount)).toString
 
 }

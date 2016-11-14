@@ -85,6 +85,8 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
     // omni
     ("omniBalanceRequest", omniBalanceRequest),
     ("sendAmpsRequest", sendAmpsRequest),
+    ("receiveBTCRequest", receiveBTCRequest),
+    ("receiveAMPRequest", receiveAMPRequest),
     ("omniGetBalance", omniGetBalance),
     ("omniTransfer", omniTransfer),
     ("getAmpWalletAddress", omniGetAmpWalletAddress),

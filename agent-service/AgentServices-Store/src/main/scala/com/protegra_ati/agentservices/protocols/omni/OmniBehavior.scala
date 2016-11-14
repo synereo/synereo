@@ -56,7 +56,7 @@ trait OmniBehaviorT extends ProtocolBehaviorT with Serializable {
       }
     }
     reset {
-      // subscribe tranfer
+      // subscribe tranfer AMPs
       for (r <- node.subscribe(agentReadCnxn)(SendAmpsRequestMessage.toLabel)) {
         rsrc2V[OmniMessage](r) match {
           case Left(SendAmpsRequestMessage(sid, cid, userFrom, privFrom, userTo, privTo, amount)) =>
@@ -67,7 +67,47 @@ trait OmniBehaviorT extends ProtocolBehaviorT with Serializable {
               rsp
             )
           case Right(true) =>
-            println(s"Waiting for transfer message")
+            println(s"Waiting for transfer AMPs message")
+
+          case _ =>
+            println(s"Not an omni protocol message $r")
+
+        }
+      }
+    }
+    reset {
+      // subscribe receive BTCs
+      for (r <- node.subscribe(agentReadCnxn)(ReceiveBTCRequestMessage.toLabel)) {
+        rsrc2V[OmniMessage](r) match {
+          case Left(ReceiveBTCRequestMessage(sid, cid, userTo, privTo, amount)) =>
+            val transaction = AMPKey(userTo, privTo).receiveBTC(amount)
+            val rsp = ReceiveBTCResponseMessage(sid, cid, userTo, transaction)
+            node.put(agentWriteCnxn)(
+              ReceiveBTCResponseMessage.toLabel(sid),
+              rsp
+            )
+          case Right(true) =>
+            println(s"Waiting for receive BTCs message")
+
+          case _ =>
+            println(s"Not an omni protocol message $r")
+
+        }
+      }
+    }
+    reset {
+      // subscribe receive AMPs
+      for (r <- node.subscribe(agentReadCnxn)(ReceiveAMPRequestMessage.toLabel)) {
+        rsrc2V[OmniMessage](r) match {
+          case Left(ReceiveAMPRequestMessage(sid, cid, userTo, privTo, amount)) =>
+            val transaction = AMPKey(userTo, privTo).receiveAMP(amount)
+            val rsp = ReceiveAMPResponseMessage(sid, cid, userTo, transaction)
+            node.put(agentWriteCnxn)(
+              ReceiveAMPResponseMessage.toLabel(sid),
+              rsp
+            )
+          case Right(true) =>
+            println(s"Waiting for receive AMPs message")
 
           case _ =>
             println(s"Not an omni protocol message $r")

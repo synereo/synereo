@@ -251,9 +251,9 @@ trait ApiClient extends CapUtilities {
     httpPost(hc, uri, req)
   }
 
-  class Pingerator(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout) extends Iterator[JArray] {
+  class Pingerator(hc: ActorRef, uri: Uri, sessionUri: String, msgType: String = "sessionPong")(implicit ec: ExecutionContext, timeout: Timeout) extends Iterator[JArray] {
 
-    private def isPong(jValue: JValue): Boolean = (jValue \ "msgType").extract[String] == "sessionPong"
+    private def isPong(jValue: JValue): Boolean = (jValue \ "msgType").extract[String] == msgType
 
     private var ponged = false
 
@@ -269,6 +269,13 @@ trait ApiClient extends CapUtilities {
   def pingUntilPong(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[JArray] =
     Future {
       new Pingerator(hc, uri, sessionUri).fold(JArray(Nil)) { (left: JArray, right: JArray) =>
+        JArray(left.arr ++ right.arr)
+      }
+    }
+
+  def pingUntilTheType(hc: ActorRef, uri: Uri, sessionUri: String, msgType: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[JArray] =
+    Future {
+      new Pingerator(hc, uri, sessionUri, msgType).fold(JArray(Nil)) { (left: JArray, right: JArray) =>
         JArray(left.arr ++ right.arr)
       }
     }

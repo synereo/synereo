@@ -16,7 +16,7 @@ trait RPCConfiguration {
   val config       = ConfigFactory.load
   val logger       = LoggerFactory.getLogger("wallet")
 
-  val networkMode  = config.getString("network.mode")
+  val networkMode  = config.getString("bitcoin.network.mode")
   val networkParams: NetworkParameters = networkMode match {
     case "MainNet" => MainNetParams.get()
     case "TestNet" => TestNet3Params.get()
@@ -30,7 +30,9 @@ trait RPCConfiguration {
   val rpcConfig    = new RPCConfig(networkParams, new URI(rpcURL), rpcUser, rpcPassword)
   val omniClient   = new OmniClient(rpcConfig)
 
-  val propertyID         = config.getString("property.id").toLong
+  val omniWalletAddress  = config.getString("omni.wallet.address")
+
+  val propertyID         = config.getString("omni.property.id").toLong
   val ampsID: CurrencyID = new CurrencyID(propertyID)
 
   val MIN_NUM_OF_CONFIRMATIONS: Int = 1

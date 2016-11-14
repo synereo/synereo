@@ -334,9 +334,8 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           uri      <- Future(apiUri)
           hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
           adminIsr <- openAdminSession(hc, uri, "admin@localhost", "a")
-          ssn      <- spawnSession(hc, uri, adminIsr.sessionURI)
-          _        <- makeBalanceRequest(hc, uri, ssn)
-          jArray   <- sessionPing(hc, uri, ssn)
+          _        <- makeBalanceRequest(hc, uri, adminIsr.sessionURI)
+          jArray   <- pingUntilTheType(hc, uri, adminIsr.sessionURI, "omniBalanceResponse")
           _        <- hc.ask(Http.CloseAll)
         } yield jArray
 
@@ -576,8 +575,13 @@ class ApiSpec extends ApiTests(Uri("https://localhost:9876/api"), clientSSLEngin
 
   var serverInstance: Option[Server] = None
 
+  var omniCoreStubServer: OmniCoreStubServer = null
+
   override def beforeEach(): Unit = {
-    if(EvalConfigWrapper.isOmniRequired) OmniCoreStubServer.start()
+    if(EvalConfigWrapper.isOmniRequired) {
+      omniCoreStubServer = new OmniCoreStubServer()
+      omniCoreStubServer.start()
+    }
     resetMongo()
     serverInstance = Some(Server().start())
     Thread.sleep(10000L)
@@ -587,6 +591,9 @@ class ApiSpec extends ApiTests(Uri("https://localhost:9876/api"), clientSSLEngin
   override def afterEach(): Unit = {
     serverInstance.map(_.stop())
     serverInstance = None
-    if(EvalConfigWrapper.isOmniRequired) OmniCoreStubServer.stop()
+    if(EvalConfigWrapper.isOmniRequired) {
+      omniCoreStubServer.stop()
+      omniCoreStubServer = null
+    }
   }
 }

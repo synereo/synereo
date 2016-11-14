@@ -1117,6 +1117,32 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           println(s"Transfer response message with sessionId = $sessionId and correlationId = $correlationId")
           SessionManager.addMonitoredTransaction(transaction, sender)
           SessionManager.addMonitoredTransaction(transaction, receiver)
+          if(AMPKey.networkMode.equals("RegTest")) AMPKey.setGenerate
+          SessionManager.cometMessage(sessionId, compact(render(
+            ("msgType" -> "sendAmpsResponse") ~
+              ("content" ->
+                ("sessionURI" -> sessionId) ~
+                  ("tx" -> transaction)))))
+        }
+        case PostedExpr((PostedExpr(ReceiveBTCResponseMessage(sessionId, correlationId, receiver, transaction)), _, _, _)) => {
+          println(s"Receive BTC response message with sessionId = $sessionId and correlationId = $correlationId")
+          SessionManager.addMonitoredTransaction(transaction, receiver)
+          if(AMPKey.networkMode.equals("RegTest")) AMPKey.setGenerate
+          SessionManager.cometMessage(sessionId, compact(render(
+            ("msgType" -> "receiveBTCResponse") ~
+              ("content" ->
+                ("sessionURI" -> sessionId) ~
+                  ("tx" -> transaction)))))
+        }
+        case PostedExpr((PostedExpr(ReceiveAMPResponseMessage(sessionId, correlationId, receiver, transaction)), _, _, _)) => {
+          println(s"Receive AMP response message with sessionId = $sessionId and correlationId = $correlationId")
+          SessionManager.addMonitoredTransaction(transaction, receiver)
+          if(AMPKey.networkMode.equals("RegTest")) AMPKey.setGenerate
+          SessionManager.cometMessage(sessionId, compact(render(
+            ("msgType" -> "receiveAMPResponse") ~
+              ("content" ->
+                ("sessionURI" -> sessionId) ~
+                  ("tx" -> transaction)))))
         }
         case PostedExpr((PostedExpr(arg), _, _, _)) => {
           println(s"Unexpected strange response : $arg")
@@ -1160,6 +1186,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     doFeed(BalanceResponseMessage.toLabel)
     doFeed(SendAmpsResponseMessage.toLabel)
+    doFeed(ReceiveBTCResponseMessage.toLabel)
+    doFeed(ReceiveAMPResponseMessage.toLabel)
   }
 
   // TODO: Replace function below with behavior
@@ -2491,6 +2519,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val capSelfCnxn = getCapSelfCnxn(cap)
     val capAndMac = getCapAndMac(cap)
     val uri = "agent://cap/" + capAndMac
+    val sessionURI = capToSession(cap)
 
     read(
       jsonBlobLabel,
@@ -2500,7 +2529,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           case None => ()  // error?
           case Some(mTT.Ground(Bottom)) => cont(None)
           case Some(mTT.RBoundHM(Some(mTT.Ground(Bottom)), _)) => cont(None)
-          case _ => cont(Some(uri))
+          case _ => cont(Some(sessionURI))
         }
       })
 
@@ -2513,6 +2542,8 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     _agentURI(email, pwd, {
       case Some(uri) => {
+        SessionManager.startSession(uri)
+        sendBalanceRequestMessage(uri)
         CompletionMapper.complete(key, compact(render(
           ("msgType" -> "getAgentResponse") ~
             ("content" -> ("agentURI" -> uri)))))
@@ -2989,10 +3020,9 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
               val aliasCnxn = getAliasCnxn(capURI.toString, defaultAlias)
               listenIntroductionNotification(sessionURI, aliasCnxn)
               listenConnectNotification(sessionURI, aliasCnxn)
-              if(EvalConfigWrapper.isOmniRequired) listenOmniMessages
 
               val biCnxnListObj = Serializer.deserialize[List[PortableAgentBiCnxn]](biCnxnList)
-
+              println(sessionURI)
               val content =
                 ("sessionURI" -> sessionURI) ~
                   ("listOfAliases" -> parse(aliasList)) ~
@@ -3010,7 +3040,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
               SessionManager.startSession(sessionURI)  // register the session
               fetchAndSendConnectionProfiles(sessionURI, defaultAlias, biCnxnListObj)
-              if(EvalConfigWrapper.isOmniRequired) sendBalanceRequestMessage(sessionURI)
+              sendBalanceRequestMessage(sessionURI)
             }
             case Bottom => {
               CompletionMapper.complete(key, compact(render(
@@ -3262,15 +3292,16 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     try {
       if(!EvalConfigWrapper.isOmniRequired) throw new Exception("Not supported")
-      fetchPrivKey(cap, hex =>
+      fetchPrivKey(cap, hex => {
+        listenOmniMessages
         postOmniMessage(
           BalanceRequestMessage.toLabel,
           BalanceRequestMessage(sessionURI, UUID.randomUUID.toString, cap, hex)
-        ))
+      )})
     } catch {
       case e: Exception =>
         e.printStackTrace()
-        respondWithError(sessionURI, e.getMessage)
+        respondWithError(sessionURI, e.getMessage, "omniBalanceError")
     }
   }
 
@@ -3291,7 +3322,47 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     } catch {
       case e: Exception =>
         e.printStackTrace()
-        respondWithError(sessionURI, e.getMessage)
+        respondWithError(sessionURI, e.getMessage, "sendAmpsError")
+    }
+  }
+
+  def receiveBTCRequest(json: JObject): Unit = {
+    val sessionURI = (json \ "sessionURI").extract[String]
+    val cap = capFromSession(sessionURI)
+    val amount = (json \ "amount").extract[String]
+
+    try {
+      if(!EvalConfigWrapper.isOmniRequired) throw new Exception("Not supported")
+      fetchPrivKey(cap, to =>
+        postOmniMessage(
+          ReceiveBTCRequestMessage.toLabel,
+          ReceiveBTCRequestMessage(sessionURI, UUID.randomUUID.toString, cap, to, amount)
+        )
+      )
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        respondWithError(sessionURI, e.getMessage, "receiveBTCError")
+    }
+  }
+
+  def receiveAMPRequest(json: JObject): Unit = {
+    val sessionURI = (json \ "sessionURI").extract[String]
+    val cap = capFromSession(sessionURI)
+    val amount = (json \ "amount").extract[String]
+
+    try {
+      if(!EvalConfigWrapper.isOmniRequired) throw new Exception("Not supported")
+      fetchPrivKey(cap, to =>
+        postOmniMessage(
+          ReceiveAMPRequestMessage.toLabel,
+          ReceiveAMPRequestMessage(sessionURI, UUID.randomUUID.toString, cap, to, amount)
+        )
+      )
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        respondWithError(sessionURI, e.getMessage, "receiveAMPError")
     }
   }
 
@@ -3300,7 +3371,6 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val confirmedTransactions = SessionManager.getUserTransactions(user).filter(tx => AMPKey.isConfirmed(tx))
     if(confirmedTransactions.nonEmpty) {
       confirmedTransactions.foreach(tx => SessionManager.removeMonitoredTransaction(tx, user))
-      listenOmniMessages
       sendBalanceRequestMessage(sessionURI)
     }
   }
@@ -3336,11 +3406,11 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       }
     )
 
-  def respondWithError(sessionURI: String, reason: String): Unit = {
+  def respondWithError(sessionURI: String, reason: String, msgType: String): Unit = {
     def buildErrorResponse(reason: String): String =
       compact(render(
-        ("msgType" -> "omniBalanceError") ~
-          ("content" -> ("reason" -> reason))))
+        ("msgType" -> msgType) ~
+        ("content" -> ("reason" -> reason))))
 
     SessionManager.cometMessage(sessionURI, buildErrorResponse(reason))
   }
