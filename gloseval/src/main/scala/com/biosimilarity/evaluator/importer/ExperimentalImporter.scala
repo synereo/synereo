@@ -4,7 +4,7 @@ import java.io.File
 import java.net.URI
 import java.util.UUID
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import akka.util.Timeout
 import com.biosimilarity.evaluator.api.Connection
 import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
@@ -20,7 +20,7 @@ import org.json4s.{BuildInfo => _}
 import org.slf4j.{Logger, LoggerFactory}
 import spray.http.Uri
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
 
 class ExperimentalImporter(host: Uri) extends ApiClient {
@@ -44,17 +44,13 @@ class ExperimentalImporter(host: Uri) extends ApiClient {
   val maxNumberOfPingUntilPongs = 5
 
   val timeoutLength: Int = EvalConfigWrapper.readIntOrElse("pongTimeout", 15) * (maxNumberOfPingUntilPongs + 1)
-  val system: ActorSystem = ActorSystem()
 
+  val system = ActorSystem()
   implicit val ec = system.dispatcher
-
-  //val port = EvalConfigWrapper.readIntOrElse("ImporterServicePort", 9876)
 
   implicit val timeout: Timeout = Timeout(FiniteDuration(timeoutLength, SECONDS))
 
-  val serverInstance: Server = Server().start()
-
-  val ehc = eventualHostConnector(system: ActorSystem, host.effectivePort, clientSSLEngineProvider)
+  val ehc: Future[ActorRef] = eventualHostConnector(system, host.effectivePort, clientSSLEngineProvider)
 
   def createAgent(agent: AgentDesc): Future[String] = {
     val jsonBlob = parse(agent.jsonBlob).extract[JObject]
@@ -66,7 +62,7 @@ class ExperimentalImporter(host: Uri) extends ApiClient {
 
   def createSession(email: String, pwd: String): Future[String] = {
     for {
-      hc <- ehc
+      hc <- eventualHostConnector(system, host.effectivePort, clientSSLEngineProvider)
       rsp <- openSRPSession(hc, host, email, pwd)
     } yield rsp.sessionURI
   }
@@ -167,13 +163,13 @@ class ExperimentalImporter(host: Uri) extends ApiClient {
     qry.printAliasCnxns()
   }
 
-  def importData(dataJson: String, email: String, password: String) = {
+  def importData(dataJson: String, email: String, password: String): Future[Int] = {
     val dataset = parse(dataJson).extract[DataSetDesc]
     var rslt: Int = 0
     for {
-      hc <- ehc
+      //hc <- ehc
       adminSession <- createSession(email, password)
-    } {
+    } yield {
       try {
         dataset.labels match {
           case Some(lbls) => lbls.foreach(l => {
@@ -201,31 +197,36 @@ class ExperimentalImporter(host: Uri) extends ApiClient {
           println("ERROR : " + ex)
           rslt = 1
       } finally {
-        closeSession(hc, host, adminSession)
+        //closeSession(hc, host, adminSession)
       }
+      rslt
     }
-    rslt
   }
 }
 
-object ExperimentalImporter {
+object ExperimentalImporter extends ApiClient {
 
-  def fromFile(dataJsonFile: File,
+  def importFile(dataJsonFile: File,
                host: URI = EvalConfigWrapper.serviceHostURI,
                email: String = EvalConfigWrapper.email,
-               password: String = EvalConfigWrapper.password): Int = {
+               password: String = EvalConfigWrapper.password): Future[Int] = {
     println(s"Importing file: $dataJsonFile")
     val dataJson: String = scala.io.Source.fromFile(dataJsonFile).getLines.map(_.trim).mkString
-    val imp              = new ExperimentalImporter(Uri(host.toString))
-    val rslt = imp.importData(dataJson, email, password)
-    println("Import file returning : " + rslt)
-    if (rslt == 0) imp.printStats()
-    rslt
+    val uri = Uri(host.toString)
+    val imp = new ExperimentalImporter(uri)
+    implicit val ec: ExecutionContext = imp.ec
+    for {
+      rslt <- imp.importData(dataJson, email, password)
+    } yield {
+      println("Import file returning : " + rslt)
+      if (rslt == 0) imp.printStats()
+      rslt
+    }
   }
 
   def fromTestData(testDataFilename: String = EvalConfigWrapper.serviceDemoDataFilename,
                    host: URI = EvalConfigWrapper.serviceHostURI,
                    email: String = EvalConfigWrapper.email,
-                   password: String = EvalConfigWrapper.password): Int =
-    fromFile(testDir.resolve(s"$testDataFilename.json").toFile, host, email, password)
+                   password: String = EvalConfigWrapper.password): Future[Int] =
+    importFile(testDir.resolve(s"$testDataFilename.json").toFile, host, email, password)
 }
