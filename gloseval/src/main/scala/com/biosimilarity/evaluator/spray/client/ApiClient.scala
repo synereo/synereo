@@ -143,8 +143,7 @@ trait ApiClient extends CapUtilities {
     }
 
   def closeSession(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =
-    httpPost(hc, uri, CloseSessionRequest(sessionUri)).map { (response: HttpResponse) =>
-      (parseHttpResponseEntity(response) \ "content" \ "sessionURI").extract[String]
+    httpPost(hc, uri, CloseSessionRequest(sessionUri)).map { (response: HttpResponse) => response.entity.asString
     }
 
   def startCam(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =

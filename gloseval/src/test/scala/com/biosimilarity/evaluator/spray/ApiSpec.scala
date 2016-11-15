@@ -81,6 +81,20 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       eventualSessionURI.futureValue shouldNot be("")
     }
 
+    "allow the administrator to create and close a session" in {
+
+      val eventualSessionURI: Future[String] =
+        for {
+          uri <- Future(apiUri)
+          hc  <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          isr <- openAdminSession(hc, uri, "admin@localhost", "a")
+          rsp <- closeSession(hc, uri, isr.sessionURI)
+          _                         <- hc.ask(Http.CloseAll)
+        } yield rsp
+
+      eventualSessionURI.futureValue shouldBe ("session closed")
+    }
+
     "allow the administrator to query an empty database without crashing" in {
 
       val eventualJArray: Future[JArray] =
