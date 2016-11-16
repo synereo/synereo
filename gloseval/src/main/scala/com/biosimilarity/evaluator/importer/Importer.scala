@@ -19,6 +19,7 @@ import com.biosimilarity.evaluator.omni.OmniClient
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 import com.biosimilarity.evaluator.spray.srp.SRPClient
 import com.biosimilarity.evaluator.util._
+import com.biosimilarity.evaluator.util.mongo.MongoQuery
 import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -400,6 +401,8 @@ object Importer {
     imp.start()
     val rslt = imp.importData(dataJson, email, password)
     imp.stop()
+    val qry = new MongoQuery()
+    qry.printAliasCnxns()
     println("Import file returning : " + rslt)
     rslt
   }

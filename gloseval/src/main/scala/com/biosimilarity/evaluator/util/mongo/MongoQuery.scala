@@ -142,6 +142,14 @@ class MongoQuery(dbHost: String = MongoQuery.defaultHost, dbPort: String = Mongo
     })
   }
 
-
+  def invalidAliasCnxns(): List[AliasCnxnContent] = {
+    val conts =  readAllAliasCnxns()
+    conts.filter( {
+      case (k: String,v: AliasCnxnContent) =>
+        v.biCnxnBouncers.length != 1
+        // other validations??
+        // orphanCnxns should be zero (hope springing eternal)
+    }).values.toList
+  }
 
 }

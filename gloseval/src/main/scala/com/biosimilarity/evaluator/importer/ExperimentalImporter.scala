@@ -13,9 +13,11 @@ import com.biosimilarity.evaluator.spray.client.ApiClient
 import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration.clientSSLEngineProvider
 import com.biosimilarity.evaluator.util._
 import com.biosimilarity.evaluator.util.mongo.MongoQuery
-import org.json4s.JsonAST.JObject
+
+import org.json4s._
+import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import org.json4s.{BuildInfo => _}
+
 import org.slf4j.{Logger, LoggerFactory}
 import spray.http.{HttpResponse, Uri}
 
@@ -38,19 +40,13 @@ class ExperimentalImporter(host: Uri) extends ApiClient {
 
   implicit val timeout: Timeout = Timeout(FiniteDuration(timeoutLength, SECONDS))
 
-  val ehc: Future[ActorRef] = eventualHostConnector(system, host.effectivePort, clientSSLEngineProvider)
-
-  def createAgent(agent: AgentDesc): Future[String] = {
+  def createAgent(hc: ActorRef, agent: AgentDesc): Future[String] = {
     val jsonBlob = parse(agent.jsonBlob).extract[JObject]
-    for {
-      hc <- ehc
-      usr <- createUser(hc, host, agent.email, agent.pwd, jsonBlob)
-    } yield usr
+    createUser(hc, host, agent.email, agent.pwd, jsonBlob)
   }
 
-  def createSession(email: String, pwd: String): Future[String] = {
+  def createSession(hc: ActorRef, email: String, pwd: String): Future[String] = {
     for {
-      hc <- eventualHostConnector(system, host.effectivePort, clientSSLEngineProvider)
       rsp <- openSRPSession(hc, host, email, pwd)
     } yield rsp.sessionURI
   }
@@ -92,7 +88,7 @@ class ExperimentalImporter(host: Uri) extends ApiClient {
     (desc,tlbls)
   }
 
-  def makeAgent(agent: AgentDesc, commonLabels: Map[String,LabelDesc]): Future[(AgentDesc,String)] = {
+  def makeAgent(hc: ActorRef, agent: AgentDesc, commonLabels: Map[String,LabelDesc]): Future[(AgentDesc,String)] = {
     val lbls: List[String] = agent.aliasLabels match {
       case None => Nil
       case Some(l) =>
@@ -106,9 +102,8 @@ class ExperimentalImporter(host: Uri) extends ApiClient {
         l2
     }
     for {
-      hc <- ehc
-      agentURI <- createAgent(agent)
-      ssn <- createSession(agent.email, agent.pwd)
+      agentURI <- createAgent(hc, agent)
+      ssn <- createSession(hc, agent.email, agent.pwd)
       _ <- addAliasLabels(hc, host, ssn, defaultAlias, lbls)
       _ <- closeSession(hc, host, ssn)
     } yield (agent, agentURI.replace("agent://cap/", "").slice(0, 36))
@@ -127,9 +122,7 @@ class ExperimentalImporter(host: Uri) extends ApiClient {
   }
 
   def makeConnections(hc: ActorRef, cnxnLabels: Map[(String,String),String], ssn: String, agentsById: Map[String,String]): Future[List[HttpResponse]] = {
-    val futs = cnxnLabels.map(pr => {
-      val cnxnLabel = pr._2
-      val (sourceId, targetId) = pr._1
+    val futs = cnxnLabels.map( { case ((sourceId,targetId),cnxnLabel) =>
       makeConnection(hc, host, ssn, sourceId, targetId, cnxnLabel)
     }).toList
     Future.sequence(futs)
@@ -147,7 +140,7 @@ class ExperimentalImporter(host: Uri) extends ApiClient {
         Connection(sourceAlias, trgtAlias, lbl)
       })
       for {
-        ssn <- createSession(agent.email, agent.pwd)
+        ssn <- createSession(hc, agent.email, agent.pwd)
         rsp <- makePost(hc, host, ssn, cnxns, post.label, post.value, post.uid)
         _ <- closeSession(hc, host, ssn)
       } yield rsp
@@ -191,12 +184,12 @@ class ExperimentalImporter(host: Uri) extends ApiClient {
       }
     }
 
-    def makeAgents(labels: Map[String,LabelDesc]): Future[List[(AgentDesc, String)]] = {
-      Future.sequence(dataset.agents.map(makeAgent(_,labels)))
+    def makeAgents(hc: ActorRef, labels: Map[String,LabelDesc]): Future[List[(AgentDesc, String)]] = {
+      Future.sequence(dataset.agents.map(makeAgent(hc,_,labels)))
     }
 
     def makeAgentsById(prs: List[(AgentDesc, String)]): Map[String, String] = {
-      val tprs: List[(String, String)] = prs.map(pr => (pr._1.id, pr._2))
+      val tprs: List[(String, String)] = prs.map( pr => (pr._1.id, pr._2))
       Map(tprs: _*)
     }
 
@@ -207,14 +200,14 @@ class ExperimentalImporter(host: Uri) extends ApiClient {
 
     val lbls = makeLabels()
     for {
-      hc <- ehc
-      adminSession <- createSession(email, password)
-      prs <- makeAgents(lbls)
+      hc <- eventualHostConnector(system, host.effectivePort, clientSSLEngineProvider)
+      adminSession <- createSession(hc, email, password)
+      prs <- makeAgents(hc, lbls)
       agentsById = makeAgentsById(prs)
       descs = makeAgentDescsById(prs)
       cnxnLabels = makeCnxnLabels(agentsById)
       _ <- makeConnections(hc, cnxnLabels, adminSession, agentsById)
-      _ <- importPosts(hc, adminSession, agentsById, descs, cnxnLabels)
+      //_ <- importPosts(hc, adminSession, agentsById, descs, cnxnLabels)
       _ <- closeSession(hc, host, adminSession)
     } yield printStats()
   }
