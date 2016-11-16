@@ -24,13 +24,13 @@ trait RPCConfiguration {
     case _ => RegTestParams.get()
   }
 
+  val isRegTestMode = networkMode.equals("RegTest")
+
   val rpcUser      = config.getString("rpc.user")
   val rpcPassword  = config.getString("rpc.password")
   val rpcURL       = config.getString("rpc.url")
   val rpcConfig    = new RPCConfig(networkParams, new URI(rpcURL), rpcUser, rpcPassword)
   val omniClient   = new OmniClient(rpcConfig)
-
-  val omniWalletAddress  = config.getString("omni.wallet.address")
 
   val propertyID         = config.getString("omni.property.id").toLong
   val ampsID: CurrencyID = new CurrencyID(propertyID)

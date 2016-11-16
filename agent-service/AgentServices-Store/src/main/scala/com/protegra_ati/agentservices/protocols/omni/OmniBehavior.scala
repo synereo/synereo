@@ -42,7 +42,7 @@ trait OmniBehaviorT extends ProtocolBehaviorT with Serializable {
           case Left(BalanceRequestMessage(sid, cid, user, priv)) =>
             val bs: BalanceSummary = AMPKey(user, priv).balance
             val rsp = BalanceResponseMessage(sid, cid, bs.address, bs.amp, bs.btc, bs.errors.mkString(";"))
-            node.put(agentWriteCnxn)(
+            node.publish(agentWriteCnxn)(
               BalanceResponseMessage.toLabel(sid),
               rsp
             )
@@ -62,7 +62,7 @@ trait OmniBehaviorT extends ProtocolBehaviorT with Serializable {
           case Left(SendAmpsRequestMessage(sid, cid, userFrom, privFrom, userTo, privTo, amount)) =>
             val transaction = AMPKey(userFrom, privFrom).transfer(AMPKey(userTo, privTo), amount)
             val rsp = SendAmpsResponseMessage(sid, cid, userFrom, userTo, transaction)
-            node.put(agentWriteCnxn)(
+            node.publish(agentWriteCnxn)(
               SendAmpsResponseMessage.toLabel(sid),
               rsp
             )
@@ -82,7 +82,7 @@ trait OmniBehaviorT extends ProtocolBehaviorT with Serializable {
           case Left(ReceiveBTCRequestMessage(sid, cid, userTo, privTo, amount)) =>
             val transaction = AMPKey(userTo, privTo).receiveBTC(amount)
             val rsp = ReceiveBTCResponseMessage(sid, cid, userTo, transaction)
-            node.put(agentWriteCnxn)(
+            node.publish(agentWriteCnxn)(
               ReceiveBTCResponseMessage.toLabel(sid),
               rsp
             )
@@ -99,10 +99,10 @@ trait OmniBehaviorT extends ProtocolBehaviorT with Serializable {
       // subscribe receive AMPs
       for (r <- node.subscribe(agentReadCnxn)(ReceiveAMPRequestMessage.toLabel)) {
         rsrc2V[OmniMessage](r) match {
-          case Left(ReceiveAMPRequestMessage(sid, cid, userTo, privTo, amount)) =>
-            val transaction = AMPKey(userTo, privTo).receiveAMP(amount)
+          case Left(ReceiveAMPRequestMessage(sid, cid, senderAddress, userTo, privTo, amount)) =>
+            val transaction = AMPKey(userTo, privTo).receiveAMP(senderAddress, amount)
             val rsp = ReceiveAMPResponseMessage(sid, cid, userTo, transaction)
-            node.put(agentWriteCnxn)(
+            node.publish(agentWriteCnxn)(
               ReceiveAMPResponseMessage.toLabel(sid),
               rsp
             )

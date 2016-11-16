@@ -6,6 +6,7 @@ import com.protegra_ati.agentservices.store.extensions.StringExtensions._
 case class ReceiveAMPRequestMessage(
   override val sessionId : String,
   override val correlationId : String,
+  senderAddress: String,
   recipient: String,
   recipientKey: String,
   amount: String

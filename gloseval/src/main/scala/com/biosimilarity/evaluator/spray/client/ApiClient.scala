@@ -251,6 +251,13 @@ trait ApiClient extends CapUtilities {
     httpPost(hc, uri, req)
   }
 
+  def makeSendAmpsRequest(hc: ActorRef, uri: Uri, sessionUri: String, targetUri: String, amount: String)(
+    implicit ec: ExecutionContext, timeout: Timeout): Future[HttpResponse] = {
+    val target = capFromSession(targetUri)
+    val req = SendAmpsRequest(sessionUri, target, amount)
+    httpPost(hc, uri, req)
+  }
+
   class Pingerator(hc: ActorRef, uri: Uri, sessionUri: String, msgType: String = "sessionPong")(implicit ec: ExecutionContext, timeout: Timeout) extends Iterator[JArray] {
 
     private def isPong(jValue: JValue): Boolean = (jValue \ "msgType").extract[String] == msgType

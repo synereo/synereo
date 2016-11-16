@@ -14,7 +14,7 @@ case class AMPKey(identity: String, key: ECKey) extends Serializable with RPCCon
   def balance: BalanceSummary = AMPKey.getBalanceSummary(address)
   def transfer(to: AMPKey, amount: String): String = AMPKey.transfer(this, to.address, amount)
   def receiveBTC(amount: String): String = AMPKey.receiveBTC(address, amount)
-  def receiveAMP(amount: String): String = AMPKey.receiveAMP(address, amount)
+  def receiveAMP(senderAddress: String, amount: String): String = AMPKey.receiveAMP(senderAddress, address, amount)
 }
 
 object AMPKey extends Serializable with OmniAPI {

@@ -44,6 +44,7 @@ case class SetAmpWalletAddress(sessionURI: String, address: String)             
 case class OmniTransfer(sessionURI: String, target: String, amount: BigDecimal)                      extends RequestContent
 case class OmniGetBalance(sessionURI: String)                                                        extends RequestContent
 case class OmniBalanceRequest(sessionURI: String)                                                    extends RequestContent
+case class SendAmpsRequest(sessionURI: String, target: String, amount: String)                       extends RequestContent
 
 sealed trait ResponseContent {
 

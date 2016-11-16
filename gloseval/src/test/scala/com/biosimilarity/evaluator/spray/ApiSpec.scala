@@ -327,7 +327,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       }
     }
 
-    "return balance summary for user" ignore {
+    "return balance summary for user" in {
 
       val eventualJArray: Future[(JArray)] =
         for {
@@ -346,6 +346,31 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
         msgType shouldBe "omniBalanceResponse"
         content.amp shouldEqual "42.00000000"
+      }
+    }
+
+    "transfer AMPs, check the transaction's confirmation and then return the updated balance" in {
+      val eventualJArray: Future[(JArray)] =
+        for {
+          uri      <- Future(apiUri)
+          hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          adminIsr <- openAdminSession(hc, uri, "admin@localhost", "a")
+          alice    <- createSRPUser(hc, "alice@testing.com", "alice", "a")
+          isrA     <- {
+                        println(s"User $alice created")
+                        openSRPSession(hc, uri, "alice@testing.com", "a")
+                      }
+          _        <- makeSendAmpsRequest(hc, uri, adminIsr.sessionURI, isrA.sessionURI, "10")
+          jArray   <- pingUntilTheType(hc, uri, adminIsr.sessionURI, "omniBalanceResponse")
+          _        <- hc.ask(Http.CloseAll)
+        } yield jArray
+
+      whenReady(eventualJArray) { (jArray: JArray) =>
+        val rsp = jArray.arr.head.asInstanceOf[JObject]
+        val msgType = (rsp \ "msgType").extract[String]
+        val content = (rsp \ "content").extract[OmniBalanceResponse]
+
+        msgType shouldBe "omniBalanceResponse"
       }
     }
 

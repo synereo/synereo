@@ -76,7 +76,7 @@ trait OmniAPI extends RPCConfiguration {
   def receiveBTC(address: Address, amount: String): String =
     omniClient.sendFrom("", address, Coin.parseCoin(amount)).toString
 
-  def receiveAMP(address: Address, amount: String) =
-    omniClient.omniSend(getReceiveAddress(omniWalletAddress), address, ampsID, getAmpValue(amount)).toString
+  def receiveAMP(senderAddress: String, address: Address, amount: String) =
+    omniClient.omniSend(getReceiveAddress(senderAddress), address, ampsID, getAmpValue(amount)).toString
 
 }

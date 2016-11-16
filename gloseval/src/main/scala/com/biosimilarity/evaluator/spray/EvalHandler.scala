@@ -1117,7 +1117,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           println(s"Transfer response message with sessionId = $sessionId and correlationId = $correlationId")
           SessionManager.addMonitoredTransaction(transaction, sender)
           SessionManager.addMonitoredTransaction(transaction, receiver)
-          if(AMPKey.networkMode.equals("RegTest")) AMPKey.setGenerate
+          if(AMPKey.isRegTestMode) AMPKey.setGenerate
           SessionManager.cometMessage(sessionId, compact(render(
             ("msgType" -> "sendAmpsResponse") ~
               ("content" ->
@@ -1127,7 +1127,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         case PostedExpr((PostedExpr(ReceiveBTCResponseMessage(sessionId, correlationId, receiver, transaction)), _, _, _)) => {
           println(s"Receive BTC response message with sessionId = $sessionId and correlationId = $correlationId")
           SessionManager.addMonitoredTransaction(transaction, receiver)
-          if(AMPKey.networkMode.equals("RegTest")) AMPKey.setGenerate
+          if(AMPKey.isRegTestMode) AMPKey.setGenerate
           SessionManager.cometMessage(sessionId, compact(render(
             ("msgType" -> "receiveBTCResponse") ~
               ("content" ->
@@ -1137,7 +1137,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         case PostedExpr((PostedExpr(ReceiveAMPResponseMessage(sessionId, correlationId, receiver, transaction)), _, _, _)) => {
           println(s"Receive AMP response message with sessionId = $sessionId and correlationId = $correlationId")
           SessionManager.addMonitoredTransaction(transaction, receiver)
-          if(AMPKey.networkMode.equals("RegTest")) AMPKey.setGenerate
+          if(AMPKey.isRegTestMode) AMPKey.setGenerate
           SessionManager.cometMessage(sessionId, compact(render(
             ("msgType" -> "receiveAMPResponse") ~
               ("content" ->
@@ -3332,7 +3332,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     val amount = (json \ "amount").extract[String]
 
     try {
-      if(!EvalConfigWrapper.isOmniRequired) throw new Exception("Not supported")
+      if(!(EvalConfigWrapper.isOmniRequired && AMPKey.isRegTestMode)) throw new Exception("Not supported")
       fetchPrivKey(cap, to =>
         postOmniMessage(
           ReceiveBTCRequestMessage.toLabel,
@@ -3349,14 +3349,15 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   def receiveAMPRequest(json: JObject): Unit = {
     val sessionURI = (json \ "sessionURI").extract[String]
     val cap = capFromSession(sessionURI)
+    val fromAddress = (json \ "from").extract[String]
     val amount = (json \ "amount").extract[String]
 
     try {
-      if(!EvalConfigWrapper.isOmniRequired) throw new Exception("Not supported")
+      if(!(EvalConfigWrapper.isOmniRequired && AMPKey.isRegTestMode)) throw new Exception("Not supported")
       fetchPrivKey(cap, to =>
         postOmniMessage(
           ReceiveAMPRequestMessage.toLabel,
-          ReceiveAMPRequestMessage(sessionURI, UUID.randomUUID.toString, cap, to, amount)
+          ReceiveAMPRequestMessage(sessionURI, UUID.randomUUID.toString, fromAddress, cap, to, amount)
         )
       )
     } catch {
