@@ -53,7 +53,7 @@ class SimpleColocatedTest extends ApiTests(Uri("https://localhost:9876/api"), tr
     val name: String = containerName()
     lazy val colocatedNode: Node = HeadedNode(name = name,
                                               deploymentMode = Colocated,
-                                              address = new InetSocketAddress("10.100.101.2", 6672),
+                                              address = new InetSocketAddress("10.100.101.10", 6672),
                                               dslCommLinkServer = colocatedNode,
                                               dslCommLinkClients = List(colocatedNode),
                                               dslEvaluator = colocatedNode,
@@ -82,6 +82,7 @@ class SimpleColocatedTest extends ApiTests(Uri("https://localhost:9876/api"), tr
     }
     logger.info("%-24s %s".format("Waiting for server:", name))
     spinwaitOnServer(system, apiUri, FiniteDuration(5, SECONDS), 20)(ec, system.scheduler, timeout)
+    Thread.sleep(5000L)
     logger.info("%-24s %s".format("Starting test:", name))
   }
 
