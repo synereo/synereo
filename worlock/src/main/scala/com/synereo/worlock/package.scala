@@ -1,5 +1,7 @@
 package com.synereo
 
+import java.net.InetSocketAddress
+
 import com.biosimilarity.evaluator.util._
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.CreateContainerResponse
@@ -14,14 +16,23 @@ package object worlock extends Network {
 
   val conf: Config = ConfigFactory.load()
 
-  def getDockerClientPort: Int =
+  def getDockerClientAddress: InetSocketAddress =
     getOS match {
-      case "Windows 10" => Try(conf.getInt("worlock.default-docker-client-port-windows-10")).getOrElse(2375)
-      case _            => Try(conf.getInt("worlock.default-docker-client-port")).getOrElse(2376)
+      case "Windows 10" =>
+        val host: String = Try(conf.getString("worlock.default-docker-client-host-windows-10")).getOrElse("localhost")
+        val port: Int    = Try(conf.getInt("worlock.default-docker-client-port-windows-10")).getOrElse(2375)
+        new InetSocketAddress(host, port)
+      case _ =>
+        val host: String = Try(conf.getString("worlock.default-docker-client-host")).getOrElse("localhost")
+        val port: Int    = Try(conf.getInt("worlock.default-docker-client-port")).getOrElse(2376)
+        new InetSocketAddress(host, port)
     }
 
-  def getDockerClientConfig(port: Int = getDockerClientPort): DefaultDockerClientConfig =
-    DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(s"tcp://localhost:$port").build()
+  def getDockerClientConfig(clientAddress: InetSocketAddress = getDockerClientAddress): DefaultDockerClientConfig =
+    DefaultDockerClientConfig
+      .createDefaultConfigBuilder()
+      .withDockerHost(s"tcp://${clientAddress.getHostString}:${clientAddress.getPort}")
+      .build()
 
   def getDockerClient(config: DefaultDockerClientConfig = getDockerClientConfig()): Try[DockerClient] =
     Try(DockerClientBuilder.getInstance(config).build())
