@@ -34,8 +34,10 @@ object Containable {
 
     def getEnvironment(n: Node): Map[String, String] =
       Map[String, String](
-        "JAVA_OPTS" ->
-          s"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$internalJVMDebugPort",
+        "JAVA_OPTS" -> {
+          val suspend = if (n.suspendForDebugger) "y" else "n"
+          s"-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspend,address=$internalJVMDebugPort"
+        },
         "DEPLOYMENT_MODE" ->
           n.deploymentMode.toString,
         "DSL_COMM_LINK_SERVER_HOST" ->

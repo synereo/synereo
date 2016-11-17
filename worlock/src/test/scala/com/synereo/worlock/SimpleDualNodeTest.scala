@@ -64,7 +64,8 @@ class SimpleDualNodeTest extends ApiTests(Uri("https://localhost:9876/api"), tru
                                                bFactoryEvaluator = headlessNode,
                                                exposedDebugPort = Some(5005),
                                                exposedMongoPort = Some(37017),
-                                               exposedRabbitManagementPort = Some(55672))
+                                               exposedRabbitManagementPort = Some(55672),
+                                               suspendForDebugger = false)
 
     lazy val headedNode: Node = HeadedNode(name = headedName,
                                            deploymentMode = Distributed,
@@ -82,7 +83,8 @@ class SimpleDualNodeTest extends ApiTests(Uri("https://localhost:9876/api"), tru
                                            exposedServerSSLPort = Some(9876),
                                            exposedDebugPort = Some(5006),
                                            exposedMongoPort = Some(27017),
-                                           exposedRabbitManagementPort = Some(55673))
+                                           exposedRabbitManagementPort = Some(55673),
+                                           suspendForDebugger = false)
 
     logger.info("%-24s %s".format("Preparing test:", test.name))
 

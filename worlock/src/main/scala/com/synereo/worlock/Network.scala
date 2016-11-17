@@ -24,6 +24,7 @@ trait Network {
     val exposedDebugPort: Option[Int]
     val exposedMongoPort: Option[Int]
     val exposedRabbitManagementPort: Option[Int]
+    val suspendForDebugger: Boolean
   }
 
   final class HeadedNode(val name: String,
@@ -42,7 +43,8 @@ trait Network {
                          val exposedServerSSLPort: Option[Int],
                          val exposedDebugPort: Option[Int],
                          val exposedMongoPort: Option[Int],
-                         val exposedRabbitManagementPort: Option[Int])
+                         val exposedRabbitManagementPort: Option[Int],
+                         val suspendForDebugger: Boolean)
       extends Node {
 
     lazy val dslCommLinkServer             = _dslCommLinkServer
@@ -71,7 +73,8 @@ trait Network {
               exposedServerSSLPort: Option[Int],
               exposedDebugPort: Option[Int],
               exposedMongoPort: Option[Int],
-              exposedRabbitManagementPort: Option[Int]): HeadedNode =
+              exposedRabbitManagementPort: Option[Int],
+              suspendForDebugger: Boolean): HeadedNode =
       new HeadedNode(name,
                      deploymentMode,
                      address,
@@ -88,7 +91,8 @@ trait Network {
                      exposedServerSSLPort,
                      exposedDebugPort,
                      exposedMongoPort,
-                     exposedRabbitManagementPort)
+                     exposedRabbitManagementPort,
+                     suspendForDebugger)
   }
 
   final class HeadlessNode(val name: String,
@@ -103,7 +107,8 @@ trait Network {
                            _bFactoryEvaluator: => Node,
                            val exposedDebugPort: Option[Int],
                            val exposedMongoPort: Option[Int],
-                           val exposedRabbitManagementPort: Option[Int])
+                           val exposedRabbitManagementPort: Option[Int],
+                           val suspendForDebugger: Boolean)
       extends Node {
 
     lazy val dslCommLinkServer             = _dslCommLinkServer
@@ -128,7 +133,8 @@ trait Network {
               bFactoryEvaluator: => Node,
               exposedDebugPort: Option[Int],
               exposedMongoPort: Option[Int],
-              exposedRabbitManagementPort: Option[Int]): HeadlessNode =
+              exposedRabbitManagementPort: Option[Int],
+              suspendForDebugger: Boolean): HeadlessNode =
       new HeadlessNode(name,
                        deploymentMode,
                        address,
@@ -141,6 +147,7 @@ trait Network {
                        bFactoryEvaluator,
                        exposedDebugPort,
                        exposedMongoPort,
-                       exposedRabbitManagementPort)
+                       exposedRabbitManagementPort,
+                       suspendForDebugger)
   }
 }

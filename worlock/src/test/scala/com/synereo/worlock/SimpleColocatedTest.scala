@@ -67,7 +67,8 @@ class SimpleColocatedTest extends ApiTests(Uri("https://localhost:9876/api"), tr
                                               exposedServerSSLPort = Some(9876),
                                               exposedDebugPort = Some(5005),
                                               exposedMongoPort = Some(27017),
-                                              exposedRabbitManagementPort = Some(55672))
+                                              exposedRabbitManagementPort = Some(55672),
+                                              suspendForDebugger = false)
     containerInfo = (for {
       client    <- dockerClient
       network   <- networkInfo.map(_._2).toTry
