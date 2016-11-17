@@ -74,23 +74,20 @@ trait ApiClient extends CapUtilities {
       s
     }
 
-  def createTestUsers( hc: ActorRef, n: Int)(implicit ec: ExecutionContext, timeout: Timeout): Future[List[String]] = {
-    val evusers: List[Future[String]] = (0 to n ).toList.map { i => {
-        val s = i.toString
-        createSRPUser(hc, s + "@testing", "user_" + s, s)
-      }
+  def createTestUsers(hc: ActorRef, uri: Uri, n: Int)(implicit ec: ExecutionContext, timeout: Timeout): Future[List[String]] = {
+    val evusers: List[Future[String]] = (0 to n).toList.map { (i: Int) =>
+      createSRPUser(hc, uri, s"$i@testing", s"user_$i", i.toString)
     }
     Future.sequence(evusers)
   }
 
-  def createSRPUser(hc: ActorRef, email: String, username: String, password: String)(implicit ec: ExecutionContext,
-                                                                                     timeout: Timeout): Future[String] = {
-    val uri = Uri("/api")  //@@GS  wtf???
+  def createSRPUser(hc: ActorRef, uri: Uri, email: String, username: String, password: String)(implicit ec: ExecutionContext,
+                                                                                               timeout: Timeout): Future[String] = {
     createUser(hc, uri, email, password, JObject(("name", JString(username)) :: Nil))
   }
 
   def createUser(hc: ActorRef, uri: Uri, email: String, password: String, blob: JObject)(implicit ec: ExecutionContext,
-                                                                                     timeout: Timeout): Future[String] =
+                                                                                         timeout: Timeout): Future[String] =
     for {
       srpClient <- eventualSRPClient()
       nce       <- Future(s"noConfirm:$email")
