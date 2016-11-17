@@ -140,7 +140,8 @@ trait ApiClient extends CapUtilities {
     }
 
   def closeSession(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =
-    httpPost(hc, uri, CloseSessionRequest(sessionUri)).map { (response: HttpResponse) => response.entity.asString
+    httpPost(hc, uri, CloseSessionRequest(sessionUri)).map { (response: HttpResponse) =>
+      response.entity.asString
     }
 
   def startCam(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] =
@@ -160,26 +161,24 @@ trait ApiClient extends CapUtilities {
     s"alias://${capFromAgentUri(agent)}/$alias"
 
   def makeConnection(hc: ActorRef, uri: Uri, sessionUri: String, agentL: String, agentR: String, cnxnLabel: String)(
-    implicit ec: ExecutionContext,
-    timeout: Timeout): Future[HttpResponse] = {
+      implicit ec: ExecutionContext,
+      timeout: Timeout): Future[HttpResponse] = {
     val sourceUri: String                = makeAliasUri(agentL)
     val targetUri: String                = makeAliasUri(agentR)
     val cont: EstablishConnectionRequest = EstablishConnectionRequest(sessionUri, sourceUri, targetUri, cnxnLabel)
     httpPost(hc, uri, cont)
   }
 
-  def addAliasLabels(hc: ActorRef, uri: Uri, sessionUri: String, alias: String, labels: List[String])(implicit ec: ExecutionContext,   timeout: Timeout): Future[HttpResponse] = {
+  def addAliasLabels(hc: ActorRef, uri: Uri, sessionUri: String, alias: String, labels: List[String])(
+      implicit ec: ExecutionContext,
+      timeout: Timeout): Future[HttpResponse] = {
     val cont = AddAliasLabelsRequest(sessionUri, alias, labels)
     httpPost(hc, uri, cont)
   }
 
-  def makePost(hc: ActorRef,
-               uri: Uri,
-               sessionUri: String,
-               targets: List[Connection],
-               label: String,
-               value: String,
-               uid: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[HttpResponse] = {
+  def makePost(hc: ActorRef, uri: Uri, sessionUri: String, targets: List[Connection], label: String, value: String, uid: String)(
+      implicit ec: ExecutionContext,
+      timeout: Timeout): Future[HttpResponse] = {
     val from: String               = "agent://" + capFromSession(sessionUri)
     val selfcnxn: Connection       = Connection(from, from, "alias")
     val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: targets, label, Some(value), Some(uid))
@@ -196,11 +195,10 @@ trait ApiClient extends CapUtilities {
                 uid: List[String])(implicit ec: ExecutionContext, timeout: Timeout): Future[List[HttpResponse]] = {
     val from: String         = "agent://" + capFromSession(sessionUri)
     val selfcnxn: Connection = Connection(from, from, "alias")
-    val eventualPosts: List[Future[HttpResponse]] = (labels, value, uid).zipped.toList.map {
-      (tuple: (String, String, String)) =>
-        val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: targets, tuple._1, Some(tuple._2), Some(tuple._3))
-        val req: EvalSubscribeRequest  = EvalSubscribeRequest(sessionUri, EvalSubscribeExpression("insertContent", cont))
-        httpPost(hc, uri, req)
+    val eventualPosts: List[Future[HttpResponse]] = (labels, value, uid).zipped.toList.map { (tuple: (String, String, String)) =>
+      val cont: EvalSubscribeContent = EvalSubscribeContent(selfcnxn :: targets, tuple._1, Some(tuple._2), Some(tuple._3))
+      val req: EvalSubscribeRequest  = EvalSubscribeRequest(sessionUri, EvalSubscribeExpression("insertContent", cont))
+      httpPost(hc, uri, req)
     }
     Future.sequence(eventualPosts)
   }
@@ -234,7 +232,7 @@ trait ApiClient extends CapUtilities {
       jArray.arr.filter { (value: JValue) =>
         (value \ "msgType").extract[String] == "connectionProfileResponse"
       }.map { (value: JValue) =>
-        val cnxn = value \ "content" \ "connection"
+        val cnxn   = value \ "content" \ "connection"
         val source = (cnxn \ "source").extract[String]
         val target = (cnxn \ "target").extract[String]
         val label  = (cnxn \ "label").extract[String]

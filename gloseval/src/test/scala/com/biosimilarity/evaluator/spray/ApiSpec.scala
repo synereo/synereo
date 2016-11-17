@@ -89,7 +89,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           hc  <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
           isr <- openAdminSession(hc, uri, "admin@localhost", "a")
           rsp <- closeSession(hc, uri, isr.sessionURI)
-          _                         <- hc.ask(Http.CloseAll)
+          _   <- hc.ask(Http.CloseAll)
         } yield rsp
 
       eventualSessionURI.futureValue shouldBe ("session closed")
@@ -166,15 +166,15 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           isr     <- openAdminSession(hc, uri, "admin@localhost", "a")
           _       <- createTestUsers(hc, uri, userCount)(ec, Timeout(7200, SECONDS))
           spwnssn <- spawnSession(hc, uri, isr.sessionURI)
-          _        <- getConnectionProfiles(hc, uri, spwnssn)
-          jArray   <- pingUntilPong(hc, uri, spwnssn)
-          _        <- hc.ask(Http.CloseAll)
+          _       <- getConnectionProfiles(hc, uri, spwnssn)
+          jArray  <- pingUntilPong(hc, uri, spwnssn)
+          _       <- hc.ask(Http.CloseAll)
         } yield jArray
 
       whenReady(eventualJArray) { (ja: JArray) =>
         //println(s"returned connections: ${pretty(render(ja))}")
         ja.values.length shouldBe userCount + 2
-      } (PatienceConfig(timeout = Span(7200, Seconds)))
+      }(PatienceConfig(timeout = Span(7200, Seconds)))
 
     }
 
@@ -330,16 +330,18 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
     def extractPostUids(jArray: JArray): List[String] = {
       val posts: List[String] = extractPosts(jArray)
-      posts.map { (s: String) => (parse(s) \ "uid").extract[String] }
+      posts.map { (s: String) =>
+        (parse(s) \ "uid").extract[String]
+      }
     }
 
-    def genPosts(lbls: String*) : List[TestPost] = {
-      lbls.toList.zipWithIndex.map { case (lbl: String, i: Int) => TestPost("uid_"+i, "Subject "+i, "Text "+i, lbl) }   // for HT's enjoyment :-)
+    def genPosts(lbls: String*): List[TestPost] = {
+      lbls.toList.zipWithIndex.map { case (lbl: String, i: Int) => TestPost("uid_" + i, "Subject " + i, "Text " + i, lbl) } // for HT's enjoyment :-)
     }
 
     "respond with expected query results (each)" in {
 
-      val testPosts: List[TestPost] = genPosts("each([Vogon])","each([Vogon],[Dent])","each([Vogon])")
+      val testPosts: List[TestPost] = genPosts("each([Vogon])", "each([Vogon],[Dent])", "each([Vogon])")
 
       val query: String = "each([Dent])"
 
@@ -467,9 +469,9 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       rslt shouldBe 0
       val qry = new MongoQuery()
       qry.printAliasCnxns()
-      val conts =  qry.readAllAliasCnxns()
+      val conts = qry.readAllAliasCnxns()
       conts.size shouldBe 12
-      conts.foreach( pr => {
+      conts.foreach(pr => {
         val cnxn = pr._2
         cnxn.biCnxnBouncers.length shouldBe 1
         //cnxn.orphans.length shouldBe 1
@@ -485,7 +487,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       rslt shouldBe 0
       val qry = new MongoQuery()
       qry.printAliasCnxns()
-      val conts =  qry.readAllAliasCnxns()
+      val conts = qry.readAllAliasCnxns()
       conts("Alice").biCnxnBouncers.length shouldBe 1
       conts("Bob").biCnxnBouncers.length shouldBe 1
       // Need to create an SOC to get the orphans issue fixed
