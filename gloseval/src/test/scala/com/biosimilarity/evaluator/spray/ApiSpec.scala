@@ -6,11 +6,9 @@ import akka.util.Timeout
 import com.biosimilarity.evaluator.BuildInfo
 import com.biosimilarity.evaluator.api._
 import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
-import com.biosimilarity.evaluator.importer.Importer
 import com.biosimilarity.evaluator.spray.client.ApiClient
 import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.util._
-import com.biosimilarity.evaluator.util.mongo.MongoQuery
 import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -461,43 +459,6 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       }
     }
   }
-
-  "The Importer" should {
-
-    "import the 'zeroToTen' test file " ignore {
-      val rslt = Importer.fromTestData("zeroToTen")
-      rslt shouldBe 0
-      val qry = new MongoQuery()
-      qry.printAliasCnxns()
-      val conts = qry.readAllAliasCnxns()
-      conts.size shouldBe 12
-      conts.foreach(pr => {
-        val cnxn = pr._2
-        cnxn.biCnxnBouncers.length shouldBe 1
-        //cnxn.orphans.length shouldBe 1
-      })
-      conts(" Lucky Seven").cnxns.length shouldBe 3
-      conts(" Zero").cnxns.length shouldBe 11
-      conts("NodeAdmin QueenSplicious").cnxns.length shouldBe 11
-    }
-
-    "import the 'singlePost' test file " ignore {
-
-      val rslt = Importer.fromTestData("singlePost")
-      rslt shouldBe 0
-      val qry = new MongoQuery()
-      qry.printAliasCnxns()
-      val conts = qry.readAllAliasCnxns()
-      conts("Alice").biCnxnBouncers.length shouldBe 1
-      conts("Bob").biCnxnBouncers.length shouldBe 1
-      // Need to create an SOC to get the orphans issue fixed
-      //conts("Alice").orphans.length shouldBe 0
-      //conts("Bob").orphans.length shouldBe 0
-
-    }
-
-  }
-
 }
 
 class ApiSpec extends ApiTests(Uri("https://localhost:9876/api"), clientSSLEngineProvider) with IntegrationPatience {
