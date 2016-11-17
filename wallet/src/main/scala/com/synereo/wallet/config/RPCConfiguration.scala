@@ -12,11 +12,13 @@ import org.slf4j.LoggerFactory
 
 import scala.util.Try
 
+import scala.collection.JavaConversions._
+
 trait RPCConfiguration {
-  val config       = ConfigFactory.load
+  val config       = ConfigFactory.load(ConfigFactory.parseFile(new java.io.File("eval.conf")))
   val logger       = LoggerFactory.getLogger("wallet")
 
-  val networkMode  = config.getString("bitcoin.network.mode")
+  val networkMode  = config.getString("omni.networkMode")
   val networkParams: NetworkParameters = networkMode match {
     case "MainNet" => MainNetParams.get()
     case "TestNet" => TestNet3Params.get()
@@ -26,16 +28,26 @@ trait RPCConfiguration {
 
   val isRegTestMode = networkMode.equals("RegTest")
 
-  val rpcUser      = config.getString("rpc.user")
-  val rpcPassword  = config.getString("rpc.password")
-  val rpcURL       = config.getString("rpc.url")
+  val isMainNetMode = networkMode.equals("MainNet")
+
+  val rpcUser      = config.getString("omni.rpcUser")
+  val rpcPassword  = config.getString("omni.rpcPassword")
+  val rpcURL       = config.getString("omni.rpcUrl")
   val rpcConfig    = new RPCConfig(networkParams, new URI(rpcURL), rpcUser, rpcPassword)
   val omniClient   = new OmniClient(rpcConfig)
 
-  val propertyID         = config.getString("omni.property.id").toLong
-  val ampsID: CurrencyID = new CurrencyID(propertyID)
+  val propertyName = "SynereoCoin"
 
   val MIN_NUM_OF_CONFIRMATIONS: Int = 1
 
   def isHealthy = Try(omniClient.getInfo).isSuccess
+
+  lazy val ampsID: CurrencyID = if(isHealthy) {
+    if(isMainNetMode) CurrencyID.AMP
+    else {
+      val properties = omniClient.omniListProperties().toList.filter(p => p.getName.equals(propertyName))
+      if(properties.nonEmpty) properties.head.getPropertyid
+      else throw new Exception("Synereo Coin property is missing")
+    }
+  } else throw new Exception("Unable to connect to OmniCore")
 }

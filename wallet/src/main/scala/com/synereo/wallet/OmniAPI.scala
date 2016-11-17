@@ -3,7 +3,7 @@ package com.synereo.wallet
 import java.math.BigDecimal
 import javax.xml.bind.DatatypeConverter
 
-import foundation.omni.OmniDivisibleValue
+import foundation.omni.{CurrencyID, Ecosystem, OmniDivisibleValue, PropertyType}
 import foundation.omni.tx.OmniTxBuilder
 import com.synereo.wallet.config.RPCConfiguration
 import com.synereo.wallet.models._
@@ -71,12 +71,29 @@ trait OmniAPI extends RPCConfiguration {
   def isAddressImported(addr: String) =
     omniClient.send[java.util.List[String]]("getaddressesbyaccount", "").contains(addr)
 
-  def setGenerate = omniClient.setGenerate(true, 1L)
+  def setGenerate(blocks: Long = 1L) = omniClient.setGenerate(true, blocks)
 
   def receiveBTC(address: Address, amount: String): String =
-    omniClient.sendFrom("", address, Coin.parseCoin(amount)).toString
+    omniClient.sendToAddress(address, Coin.parseCoin(amount)).toString
 
-  def receiveAMP(senderAddress: String, address: Address, amount: String) =
-    omniClient.omniSend(getReceiveAddress(senderAddress), address, ampsID, getAmpValue(amount)).toString
+  def receiveAMP(senderAddress: Address, address: Address, amount: String) = omniClient.omniSend(senderAddress, address, ampsID, getAmpValue(amount)).toString
+
+  def createTestCurrencyAndFundTheUser(userAddress: Address): Unit = {
+    val fundingAddress = omniClient.getAccountAddress("")
+    setGenerate(101L)
+    receiveBTC(fundingAddress, "10")
+    receiveBTC(userAddress, "10")
+    setGenerate(6L)
+    omniClient.omniSendIssuanceFixed(
+      fundingAddress,
+      Ecosystem.TOMNI,
+      PropertyType.DIVISIBLE,
+      new CurrencyID(CurrencyID.MIN_VALUE),
+      "", "", propertyName, "", "Synereo Test Coin",
+      getAmpValue("2000000000"))
+    setGenerate(6L)
+    receiveAMP(fundingAddress, userAddress, "10000")
+    setGenerate(6L)
+  }
 
 }

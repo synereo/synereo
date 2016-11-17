@@ -1117,7 +1117,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
           println(s"Transfer response message with sessionId = $sessionId and correlationId = $correlationId")
           SessionManager.addMonitoredTransaction(transaction, sender)
           SessionManager.addMonitoredTransaction(transaction, receiver)
-          if(AMPKey.isRegTestMode) AMPKey.setGenerate
+          if(AMPKey.isRegTestMode) AMPKey.setGenerate()
           SessionManager.cometMessage(sessionId, compact(render(
             ("msgType" -> "sendAmpsResponse") ~
               ("content" ->
@@ -1127,7 +1127,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         case PostedExpr((PostedExpr(ReceiveBTCResponseMessage(sessionId, correlationId, receiver, transaction)), _, _, _)) => {
           println(s"Receive BTC response message with sessionId = $sessionId and correlationId = $correlationId")
           SessionManager.addMonitoredTransaction(transaction, receiver)
-          if(AMPKey.isRegTestMode) AMPKey.setGenerate
+          if(AMPKey.isRegTestMode) AMPKey.setGenerate()
           SessionManager.cometMessage(sessionId, compact(render(
             ("msgType" -> "receiveBTCResponse") ~
               ("content" ->
@@ -1137,7 +1137,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         case PostedExpr((PostedExpr(ReceiveAMPResponseMessage(sessionId, correlationId, receiver, transaction)), _, _, _)) => {
           println(s"Receive AMP response message with sessionId = $sessionId and correlationId = $correlationId")
           SessionManager.addMonitoredTransaction(transaction, receiver)
-          if(AMPKey.isRegTestMode) AMPKey.setGenerate
+          if(AMPKey.isRegTestMode) AMPKey.setGenerate()
           SessionManager.cometMessage(sessionId, compact(render(
             ("msgType" -> "receiveAMPResponse") ~
               ("content" ->
@@ -2875,10 +2875,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
         val capURI = new URI("agent://" + cap)
         val capSelfCnxn = PortableAgentCnxn(capURI, "identity", capURI)
 
-        val token = Try(ConfigFactory.load.getString("run.mode")) toOption match {
-          case Some("test") => "b08353e9"
-          case _ => UUID.randomUUID.toString.substring(0, 8)
-        }
+        val token = if(EvalConfigWrapper.isTestMode) "b08353e9" else UUID.randomUUID.toString.substring(0, 8)
 
         val tokenUri = new URI("token://" + token)
         val tokenCnxn = PortableAgentCnxn(tokenUri, "token", tokenUri)
@@ -2895,7 +2892,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                 if (testtoken) {
                   processEmailToken(token, key)
                 } else {
-                  ConfirmationEmail.confirm(email, token)
+                  //ConfirmationEmail.confirm(email, token)
                   // Notify user to check her email
                   CompletionMapper.complete(key, compact(render(
                     ("msgType" -> "createUserWaiting") ~
@@ -3272,9 +3269,13 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   def storePrivKey(cap: String): Unit = {
     if(EvalConfigWrapper.isOmniRequired) {
       val capSelfCnxn = getCapSelfCnxn(cap)
+      val ampKey = AMPKey(cap)
       try {
-        postToCnxnLabel(ampKeyLabel, capSelfCnxn, AMPKey(cap).privHex, optRsrc => {
+        postToCnxnLabel(ampKeyLabel, capSelfCnxn, ampKey.privHex, optRsrc => {
           println("EC key persisted: " + optRsrc)
+          if(AMPKey.isRegTestMode && emailToCap(EvalConfigWrapper.email).equals(cap) && !EvalConfigWrapper.isTestMode) {
+            ampKey.createTestCurrencyAndFundTheUser()
+          }
         })
       } catch {
         case e: Throwable =>
