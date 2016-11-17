@@ -157,35 +157,6 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       }
     }
 
-    "make multiple users without corrupting database" in {
-      val ablob = JObject(("name", JString("Alice"))
-        :: ("imgSrc" -> JString("data:image/pnglbase64,iVBORw0KGgoAAAANSUAAAElFTkSuQmCC"))
-        :: Nil)
-      val bblob = JObject(("name", JString("Bob"))
-        :: ("imgSrc" -> JString("data:image/pnglbase64,iVBORw0KGgoAAAANSUAAAElFTkSuQmCC"))
-        :: Nil)
-      val cblob = JObject(("name", JString("Carol"))
-        :: ("imgSrc" -> JString("data:image/pnglbase64,iVBORw0KGgoAAAANSUAAAElFTkSuQmCC"))
-        :: Nil)
-      val eventually: Future[Unit] =
-        for {
-          uri      <- Future(apiUri)
-          hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
-          alice    <- createUser(hc, uri, "alice@testing.com", "a", ablob)
-          bob      <- createUser(hc, uri, "bob@testing.com", "b", bblob)
-          carol    <- createUser(hc, uri, "carol@testing.com", "c", cblob)
-        } yield ()
-
-      whenReady(eventually) { (_) =>
-        val qry = new MongoQuery()
-        qry.printAliasCnxns()
-        val allcnxns = qry.readAllAliasCnxns()
-        allcnxns.toList.length shouldBe 4
-        val invalids = qry.invalidAliasCnxns()
-        invalids.length shouldBe 0
-      }
-    }
-
     "allow administrator to create 1000 users" ignore {
       val userCount = 300
       val eventualJArray: Future[JArray] =
