@@ -1,6 +1,6 @@
 package com.biosimilarity.evaluator.spray
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.biosimilarity.evaluator.BuildInfo
@@ -44,15 +44,20 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
     "respond to a versionInfoRequest with a versionInfoResponse" in {
 
-      val eventualResponse: Future[Response] =
-        for {
+      val eventualResponse: Future[Response] = {
+        val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+        (for {
           uri          <- Future(apiUri)
-          hc           <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
-          uri          <- Future("/api")
-          httpResponse <- httpPost(hc, uri, VersionInfoRequest)
+          hc           <- ehc
+          httpResponse <- httpPost(hc, apiUri, VersionInfoRequest)
           response     <- Future(read[Response](httpResponse.entity.asString))
           _            <- hc.ask(Http.CloseAll)
-        } yield response
+        } yield response).recover {
+          case e: Throwable =>
+            val _ = ehc.flatMap(_.ask(Http.CloseAll))
+            throw e
+        }
+      }
 
       whenReady(eventualResponse) { (response: Response) =>
         response.msgType shouldBe "versionInfoResponse"
@@ -68,53 +73,72 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
     "allow the administrator to create a session" in {
 
-      val eventualSessionURI: Future[String] =
-        for {
+      val eventualSessionURI: Future[String] = {
+        val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+        (for {
           uri                       <- Future(apiUri)
-          hc                        <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          hc                        <- ehc
           initializeSessionResponse <- openAdminSession(hc, uri, "admin@localhost", "a")
           _                         <- hc.ask(Http.CloseAll)
-        } yield initializeSessionResponse.sessionURI
+        } yield initializeSessionResponse.sessionURI).recover {
+          case e: Throwable =>
+            val _ = ehc.flatMap(_.ask(Http.CloseAll))
+            throw e
+        }
+      }
 
       eventualSessionURI.futureValue shouldNot be("")
     }
 
     "allow the administrator to create and close a session" in {
 
-      val eventualSessionURI: Future[String] =
-        for {
+      val eventualSessionURI: Future[String] = {
+        val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+        (for {
           uri <- Future(apiUri)
-          hc  <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          hc  <- ehc
           isr <- openAdminSession(hc, uri, "admin@localhost", "a")
           rsp <- closeSession(hc, uri, isr.sessionURI)
           _   <- hc.ask(Http.CloseAll)
-        } yield rsp
+        } yield rsp).recover {
+          case e: Throwable =>
+            val _ = ehc.flatMap(_.ask(Http.CloseAll))
+            throw e
+        }
+      }
 
-      eventualSessionURI.futureValue shouldBe ("session closed")
+      eventualSessionURI.futureValue shouldBe "session closed"
     }
 
     "allow the administrator to query an empty database without crashing" in {
 
-      val eventualJArray: Future[JArray] =
-        for {
+      val eventualJArray: Future[JArray] = {
+        val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+        (for {
           uri        <- Future(apiUri)
-          hc         <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          hc         <- ehc
           isr        <- openAdminSession(hc, uri, "admin@localhost", "a")
           _          <- makeQueryOnSelf(hc, uri, isr.sessionURI, "each([MESSAGEPOSTLABEL])")
           sessionUri <- spawnSession(hc, uri, isr.sessionURI)
           jArray     <- sessionPing(hc, uri, sessionUri)
           _          <- hc.ask(Http.CloseAll)
-        } yield jArray
+        } yield jArray).recover {
+          case e: Throwable =>
+            val _ = ehc.flatMap(_.ask(Http.CloseAll))
+            throw e
+        }
+      }
 
       eventualJArray.futureValue.values.length shouldBe 1
     }
 
     "allow the administrator to make connections" in {
 
-      val eventualJArray: Future[JArray] =
-        for {
+      val eventualJArray: Future[JArray] = {
+        val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+        (for {
           uri      <- Future(apiUri)
-          hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          hc       <- ehc
           isr      <- openAdminSession(hc, uri, "admin@localhost", "a")
           alice    <- createSRPUser(hc, uri, "alice@testing.com", "alice", "a")
           bob      <- createSRPUser(hc, uri, "bob@testing.com", "bob", "b")
@@ -124,7 +148,12 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           _        <- getConnectionProfiles(hc, uri, spwnssnA)
           jArray   <- pingUntilPong(hc, uri, spwnssnA)
           _        <- hc.ask(Http.CloseAll)
-        } yield jArray
+        } yield jArray).recover {
+          case e: Throwable =>
+            val _ = ehc.flatMap(_.ask(Http.CloseAll))
+            throw e
+        }
+      }
 
       whenReady(eventualJArray) { (ja: JArray) =>
         println(s"Alice's connections: ${pretty(render(ja))}")
@@ -134,10 +163,11 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
     "allow the administrator to make connections (dup)" in {
 
-      val eventualJArray: Future[JArray] =
-        for {
+      val eventualJArray: Future[JArray] = {
+        val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+        (for {
           uri      <- Future(apiUri)
-          hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          hc       <- ehc
           isr      <- openAdminSession(hc, uri, "admin@localhost", "a")
           alice    <- createSRPUser(hc, uri, "alice@testing.com", "alice", "a")
           bob      <- createSRPUser(hc, uri, "bob@testing.com", "bob", "b")
@@ -147,7 +177,12 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           _        <- getConnectionProfiles(hc, uri, spwnssnA)
           jArray   <- pingUntilPong(hc, uri, spwnssnA)
           _        <- hc.ask(Http.CloseAll)
-        } yield jArray
+        } yield jArray).recover {
+          case e: Throwable =>
+            val _ = ehc.flatMap(_.ask(Http.CloseAll))
+            throw e
+        }
+      }
 
       whenReady(eventualJArray) { (ja: JArray) =>
         println(s"Alice's connections: ${pretty(render(ja))}")
@@ -155,33 +190,39 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       }
     }
 
-    "allow administrator to create 1000 users" ignore {
+    "allow administrator to create 300 users" ignore {
+
       val userCount = 300
-      val eventualJArray: Future[JArray] =
-        for {
+      val eventualJArray: Future[JArray] = {
+        val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+        (for {
           uri     <- Future(apiUri)
-          hc      <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          hc      <- ehc
           isr     <- openAdminSession(hc, uri, "admin@localhost", "a")
           _       <- createTestUsers(hc, uri, userCount)(ec, Timeout(7200, SECONDS))
           spwnssn <- spawnSession(hc, uri, isr.sessionURI)
           _       <- getConnectionProfiles(hc, uri, spwnssn)
           jArray  <- pingUntilPong(hc, uri, spwnssn)
           _       <- hc.ask(Http.CloseAll)
-        } yield jArray
+        } yield jArray).recover {
+          case e: Throwable =>
+            val _ = ehc.flatMap(_.ask(Http.CloseAll))
+            throw e
+        }
+      }
 
       whenReady(eventualJArray) { (ja: JArray) =>
-        //println(s"returned connections: ${pretty(render(ja))}")
         ja.values.length shouldBe userCount + 2
       }(PatienceConfig(timeout = Span(7200, Seconds)))
-
     }
 
     "establish the correct number of connections" in {
 
-      val eventualTuple: Future[(JArray, JArray, JArray)] =
-        for {
+      val eventualTuple: Future[(JArray, JArray, JArray)] = {
+        val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+        (for {
           uri         <- Future(apiUri)
-          hc          <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          hc          <- ehc
           isr         <- openAdminSession(hc, uri, "admin@localhost", "a")
           alice       <- createSRPUser(hc, uri, "alice@test.com", "alice", "a")
           bob         <- createSRPUser(hc, uri, "bob@test.com", "bob", "b")
@@ -201,7 +242,12 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           _           <- getConnectionProfiles(hc, uri, spwnssnC)
           jArrayCarol <- pingUntilPong(hc, uri, spwnssnC)
           _           <- hc.ask(Http.CloseAll)
-        } yield (jArrayAlice, jArrayBob, jArrayCarol)
+        } yield (jArrayAlice, jArrayBob, jArrayCarol)).recover {
+          case e: Throwable =>
+            val _ = ehc.flatMap(_.ask(Http.CloseAll))
+            throw e
+        }
+      }
 
       whenReady(eventualTuple) {
         case (ja: JArray, jb: JArray, jc: JArray) =>
@@ -236,10 +282,11 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
       val expectedJson = compact(render(expected))
 
-      val eventualJArray: Future[JArray] =
-        for {
+      val eventualJArray: Future[JArray] = {
+        val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+        (for {
           uri                   <- Future(apiUri)
-          hc                    <- eventualHostConnector(system, uri.effectivePort, clientSSLEngineProvider)
+          hc                    <- ehc
           isr                   <- openAdminSession(hc, uri, "admin@localhost", "a")
           alice                 <- createSRPUser(hc, uri, "alice@testing.com", "alice", "a")
           bob                   <- createSRPUser(hc, uri, "bob@testing.com", "bob", "b")
@@ -259,7 +306,12 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           _                     <- makeQueryOnConnections(hc, uri, spwnssnB, bobConnections, "all([Vogons])")
           queryArray            <- pingUntilPong(hc, uri, spwnssnB)
           _                     <- hc.ask(Http.CloseAll)
-        } yield queryArray
+        } yield queryArray).recover {
+          case e: Throwable =>
+            val _ = ehc.flatMap(_.ask(Http.CloseAll))
+            throw e
+        }
+      }
 
       whenReady(eventualJArray) { (jArray: JArray) =>
         println(pretty(render(jArray)))
@@ -292,10 +344,11 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
                   ("text"  -> s"Text ${current.text}"))))
       }
 
-    def dontPanic(testPosts: List[TestPost], queryLabel: String): Future[(JArray, List[String])] =
-      for {
+    def dontPanic(testPosts: List[TestPost], queryLabel: String): Future[(JArray, List[String])] = {
+      val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+      (for {
         uri                   <- Future(apiUri)
-        hc                    <- eventualHostConnector(system, uri.effectivePort, clientSSLEngineProvider)
+        hc                    <- ehc
         isr                   <- openAdminSession(hc, uri, "admin@localhost", "a")
         alice                 <- createSRPUser(hc, uri, "alice@testing.com", "alice", "a")
         bob                   <- createSRPUser(hc, uri, "bob@testing.com", "bob", "b")
@@ -317,7 +370,12 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
         _                     <- makeQueryOnConnections(hc, uri, spwnssnB, bobConnections, queryLabel)
         queryArray            <- pingUntilPong(hc, uri, spwnssnB)
         _                     <- hc.ask(Http.CloseAll)
-      } yield (queryArray, postsJsons)
+      } yield (queryArray, postsJsons)).recover {
+        case e: Throwable =>
+          val _ = ehc.flatMap(_.ask(Http.CloseAll))
+          throw e
+      }
+    }
 
     def extractPosts(jArray: JArray): List[String] =
       jArray.arr.filter { (value: JValue) =>
@@ -395,10 +453,11 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
     "return evalSubscribeResponse when querying using 'any', 'each' or 'all'" in {
 
-      val eventualJArray: Future[JArray] =
-        for {
+      val eventualJArray: Future[JArray] = {
+        val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+        (for {
           uri      <- Future(apiUri)
-          hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          hc       <- ehc
           adminIsr <- openAdminSession(hc, uri, "admin@localhost", "a")
           ssn      <- spawnSession(hc, uri, adminIsr.sessionURI)
           _        <- makeQueryOnSelf(hc, uri, ssn, "each([MESSAGEPOSTLABEL])")
@@ -406,7 +465,12 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           _        <- makeQueryOnSelf(hc, uri, ssn, "all([MESSAGEPOSTLABEL])")
           jArray   <- sessionPing(hc, uri, ssn)
           _        <- hc.ask(Http.CloseAll)
-        } yield jArray
+        } yield jArray).recover {
+          case e: Throwable =>
+            val _ = ehc.flatMap(_.ask(Http.CloseAll))
+            throw e
+        }
+      }
 
       whenReady(eventualJArray) { (ja: JArray) =>
         val rsp     = ja.arr.head.asInstanceOf[JObject]
@@ -418,16 +482,22 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
     "return evalSubscribeError when querying not using 'any', 'each' or 'all'" in {
 
-      val eventualJArray: Future[(JArray)] =
-        for {
+      val eventualJArray: Future[(JArray)] = {
+        val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+        (for {
           uri      <- Future(apiUri)
-          hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          hc       <- ehc
           adminIsr <- openAdminSession(hc, uri, "admin@localhost", "a")
           ssn      <- spawnSession(hc, uri, adminIsr.sessionURI)
           _        <- makeQueryOnSelf(hc, uri, ssn, "lordfarquad([MESSAGEPOSTLABEL])")
           jArray   <- pingUntilPong(hc, uri, ssn)
           _        <- hc.ask(Http.CloseAll)
-        } yield jArray
+        } yield jArray).recover {
+          case e: Throwable =>
+            val _ = ehc.flatMap(_.ask(Http.CloseAll))
+            throw e
+        }
+      }
 
       whenReady(eventualJArray) { (jArray: JArray) =>
         val rsp     = jArray.arr.head.asInstanceOf[JObject]
@@ -442,16 +512,23 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
     "work" in {
 
-      val eventualString: Future[String] = for {
-        uri   <- Future(apiUri)
-        hc    <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
-        alice <- createSRPUser(hc, uri, "alice@test.com", "alice", "a")
-        isrA  <- openSRPSession(hc, uri, "alice@test.com", "a")
-        _     <- startCam(hc, uri, isrA.sessionURI)
-        _     <- pingUntilPong(hc, uri, isrA.sessionURI)
-        s     <- stopCam(hc, uri, isrA.sessionURI)
-        _     <- hc.ask(Http.CloseAll)
-      } yield s
+      val eventualString: Future[String] = {
+        val ehc: Future[ActorRef] = eventualHostConnector(system, apiUri.effectivePort, sslEngineProvider)
+        (for {
+          uri   <- Future(apiUri)
+          hc    <- ehc
+          alice <- createSRPUser(hc, uri, "alice@test.com", "alice", "a")
+          isrA  <- openSRPSession(hc, uri, "alice@test.com", "a")
+          _     <- startCam(hc, uri, isrA.sessionURI)
+          _     <- pingUntilPong(hc, uri, isrA.sessionURI)
+          s     <- stopCam(hc, uri, isrA.sessionURI)
+          _     <- hc.ask(Http.CloseAll)
+        } yield s).recover {
+          case e: Throwable =>
+            val _ = ehc.flatMap(_.ask(Http.CloseAll))
+            throw e
+        }
+      }
 
       whenReady(eventualString) { (s: String) =>
         println(s)
