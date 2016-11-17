@@ -41,7 +41,7 @@ object Containable {
         "DEPLOYMENT_MODE" ->
           n.deploymentMode.toString,
         "DSL_COMM_LINK_SERVER_HOST" ->
-          n.dslCommLinkServer.address.getAddress.toString.substring(1),
+          n.dslCommLinkServer.address.getHostString,
         "DSL_COMM_LINK_SERVER_PORT" ->
           n.dslCommLinkServer.address.getPort.toString,
         "DSL_COMM_LINK_CLIENT_HOSTS" ->
@@ -51,23 +51,23 @@ object Containable {
             }
             .mkString(","),
         "DSL_EVALUATOR_HOST" ->
-          n.dslEvaluator.address.getAddress.toString.substring(1),
+          n.dslEvaluator.address.getHostString,
         "DSL_EVALUATOR_PORT" ->
           n.dslEvaluator.address.getPort.toString,
         "DSL_EVALUATOR_PREFERRED_SUPPLIER_HOST" ->
-          n.dslEvaluatorPreferredSupplier.address.getAddress.toString.substring(1),
+          n.dslEvaluatorPreferredSupplier.address.getHostString,
         "DSL_EVALUATOR_PREFERRED_SUPPLIER_PORT" ->
           n.dslEvaluatorPreferredSupplier.address.getPort.toString,
         "BFACTORY_COMM_LINK_SERVER_HOST" ->
-          n.bFactoryCommLinkServer.address.getAddress.toString.substring(1),
+          n.bFactoryCommLinkServer.address.getHostString,
         "BFACTORY_COMM_LINK_SERVER_PORT" ->
           n.bFactoryCommLinkClient.address.getPort.toString,
         "BFACTORY_COMM_LINK_CLIENT_HOST" ->
-          n.bFactoryCommLinkClient.address.getAddress.toString.substring(1),
+          n.bFactoryCommLinkClient.address.getHostString,
         "BFACTORY_COMM_LINK_CLIENT_PORT" ->
           n.bFactoryCommLinkClient.address.getPort.toString,
         "BFACTORY_EVALUATOR_HOST" ->
-          n.bFactoryEvaluator.address.getAddress.toString.substring(1),
+          n.bFactoryEvaluator.address.getHostString,
         "BFACTORY_EVALUATOR_PORT" ->
           n.bFactoryEvaluator.address.getPort.toString
       ) ++ (n match {

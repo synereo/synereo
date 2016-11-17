@@ -541,7 +541,7 @@ trait DSLCommLinkConfiguration {
     try {
       evalConfig().getString("DSLCommLinkClientHosts").split(',').toList.map { (s: String) =>
         val inetSocketAddress: InetSocketAddress = parseInetSocketAddress(s, "localhost", 5672)
-        (inetSocketAddress.getAddress.toString.substring(1), inetSocketAddress.getPort)
+        (inetSocketAddress.getHostString, inetSocketAddress.getPort)
       }
     }
     catch {

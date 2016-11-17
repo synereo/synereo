@@ -142,7 +142,7 @@ object ConfirmationEmail extends Serializable {
     import org.apache.commons.mail._
 
     val simple = new SimpleEmail()
-    simple.setHostName(smtpServer.getHostName)
+    simple.setHostName(smtpServer.getHostString)
     simple.setSmtpPort(smtpServer.getPort)
     simple.setAuthenticator(new DefaultAuthenticator(EMAIL_AUTH_USERNAME, EMAIL_AUTH_PASSWORD))
     simple.setSSLOnConnect(true)
