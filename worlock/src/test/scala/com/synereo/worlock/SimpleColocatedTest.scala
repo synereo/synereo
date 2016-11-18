@@ -19,23 +19,15 @@ import scala.util.{Failure, Success, Try}
 
 class SimpleColocatedTest extends ApiTests(Uri("https://localhost:9876/api"), trustfulClientSSLEngineProvider) with BeforeAndAfterAll {
 
-  def containerName(): String = s"SimpleColocatedTest-${java.util.UUID.randomUUID().toString}"
-
-  val logger: Logger = LoggerFactory.getLogger(classOf[SimpleColocatedTest])
-
-  val timeoutLength: Int = 120
-
-  implicit val timeout: Timeout = Timeout(FiniteDuration(timeoutLength, SECONDS))
-
+  val logger: Logger                   = LoggerFactory.getLogger(classOf[SimpleColocatedTest])
+  val timeoutLength: Int               = 120
+  implicit val timeout: Timeout        = Timeout(FiniteDuration(timeoutLength, SECONDS))
   override implicit val patienceConfig = PatienceConfig(timeout = Span(timeoutLength, Seconds), interval = Span(1, Second))
 
-  val dockerClient: Try[DockerClient] = getDockerClient()
-
-  var networkInfo: Option[(DockerClient, DockerNetwork)] = None
-
+  val dockerClient: Try[DockerClient]                                = getDockerClient()
+  val dockerTestNetwork: DockerNetwork                               = DockerNetwork("synereo", "10.100.101.0/24")
+  var networkInfo: Option[(DockerClient, DockerNetwork)]             = None
   var containerInfo: Option[(DockerClient, CreateContainerResponse)] = None
-
-  val dockerTestNetwork: DockerNetwork = DockerNetwork("synereo", "10.100.101.0/24")
 
   override def beforeAll(): Unit = {
     networkInfo = (for {
@@ -50,8 +42,7 @@ class SimpleColocatedTest extends ApiTests(Uri("https://localhost:9876/api"), tr
   }
 
   override def beforeEach(): Unit = {
-    val name: String = containerName()
-    lazy val colocatedNode: Node = HeadedNode(name = name,
+    lazy val colocatedNode: Node = HeadedNode(name = s"SimpleColocatedTest-${java.util.UUID.randomUUID().toString}",
                                               deploymentMode = Colocated,
                                               address = new InetSocketAddress("10.100.101.10", 6672),
                                               dslCommLinkServer = colocatedNode,
@@ -76,14 +67,15 @@ class SimpleColocatedTest extends ApiTests(Uri("https://localhost:9876/api"), tr
       _         <- startContainer(client, container.getId)
     } yield (client, container)) match {
       case Success(x) =>
-        logger.info("%-24s %s".format("Created container:", name))
+        logger.info("%-24s %s".format("Created container:", colocatedNode.name))
         Some(x)
-      case Failure(exception) => throw exception
+      case Failure(exception) =>
+        throw exception
     }
-    logger.info("%-24s %s".format("Waiting for server:", name))
+    logger.info("%-24s %s".format("Waiting for server:", colocatedNode.name))
     spinwaitOnServer(system, apiUri, FiniteDuration(5, SECONDS), 20)(ec, system.scheduler, timeout)
     Thread.sleep(5000L)
-    logger.info("%-24s %s".format("Starting test:", name))
+    logger.info("%-24s %s".format("Starting test:", colocatedNode.name))
   }
 
   override def afterEach(): Unit = {

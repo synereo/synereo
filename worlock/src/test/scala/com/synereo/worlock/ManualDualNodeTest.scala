@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicReference
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.util.Timeout
-import com.biosimilarity.evaluator.distribution.{Distributed, Headed, Headless}
+import com.biosimilarity.evaluator.distribution.Distributed
 import com.biosimilarity.evaluator.spray.client.ApiClient
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.CreateContainerResponse
@@ -22,46 +22,24 @@ import spray.http.{HttpResponse, StatusCodes, Uri}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
-import scala.util.{Failure, Random, Success, Try}
+import scala.util.Try
 
 class ManualDualNodeTest extends WordSpec with ApiClient with Matchers with ScalaFutures with BeforeAndAfterAll {
 
-  val system: ActorSystem = ActorSystem()
-
-  implicit val ec = system.dispatcher
-
-  implicit val timeout: Timeout = Timeout(FiniteDuration(360, SECONDS))
-
+  val system: ActorSystem              = ActorSystem()
+  implicit val ec                      = system.dispatcher
+  implicit val timeout: Timeout        = Timeout(FiniteDuration(360, SECONDS))
   implicit override val patienceConfig = PatienceConfig(timeout = Span(360, Seconds), interval = Span(1, Second))
+  implicit val logger: Logger          = LoggerFactory.getLogger(classOf[ManualDualNodeTest])
 
-  val logger: Logger = LoggerFactory.getLogger(classOf[ManualDualNodeTest])
-
-  val apiUri = Uri("https://localhost:9876/api")
-
-  val client: DockerClient = getDockerClient().get
-
+  val client: DockerClient       = getDockerClient().get
   val testNetwork: DockerNetwork = DockerNetwork("synereo", "10.100.101.0/24")
+  val apiUri                     = Uri("https://localhost:9876/api")
+  val ae: Map[String, String]    = Map("TWEET_LEVEL" -> "warning")
 
-  def setupNetwork(): Unit =
-    createOrGetNetwork(client, testNetwork) match {
-      case Success(x) =>
-        logger.info("%-24s %s".format("Using network:", x.name))
-      case Failure(exception) =>
-        throw exception
-    }
-
-  def containerName(): String = s"ManualDualNodeTest-${java.util.UUID.randomUUID().toString}"
-
-  def tryLogger(msg: String): Try[Unit] = Try(logger.info(msg))
-
-  val headlessName: String    = containerName() + s"-$Headless"
-  val headedName: String      = containerName() + s"-$Headed"
-  val rs: Iterator[Int]       = Random.shuffle(2 to 254).toIterator
-  val ae: Map[String, String] = Map("TWEET_LEVEL" -> "warning")
-
-  lazy val headlessNode: Node = HeadlessNode(name = headlessName,
+  lazy val headlessNode: Node = HeadlessNode(name = "headlessNode",
                                              deploymentMode = Distributed,
-                                             address = new InetSocketAddress(s"10.100.101.${rs.next()}", 5672),
+                                             address = new InetSocketAddress(s"10.100.101.2", 5672),
                                              dslCommLinkServer = headlessNode,
                                              dslCommLinkClients = List(headedNode),
                                              dslEvaluator = headedNode,
@@ -74,9 +52,9 @@ class ManualDualNodeTest extends WordSpec with ApiClient with Matchers with Scal
                                              exposedRabbitManagementPort = Some(55672),
                                              suspendForDebugger = false)
 
-  lazy val headedNode: Node = HeadedNode(name = headedName,
+  lazy val headedNode: Node = HeadedNode(name = "headedNode",
                                          deploymentMode = Distributed,
-                                         address = new InetSocketAddress(s"10.100.101.${rs.next()}", 5672),
+                                         address = new InetSocketAddress(s"10.100.101.3", 5672),
                                          dslCommLinkServer = headedNode,
                                          dslCommLinkClients = List(headlessNode),
                                          dslEvaluator = headlessNode,
@@ -93,15 +71,17 @@ class ManualDualNodeTest extends WordSpec with ApiClient with Matchers with Scal
                                          exposedRabbitManagementPort = Some(55673),
                                          suspendForDebugger = false)
 
+  def setupNetwork(): Unit = setupTestNetwork(client, testNetwork)
+
   def setupContainers(): Try[List[CreateContainerResponse]] =
     for {
       network           <- Try(testNetwork)
       headlessContainer <- createContainer(client, network, headlessNode, ae)
       headedContainer   <- createContainer(client, network, headedNode, ae)
       _                 <- startContainer(client, headlessContainer.getId)
-      _                 <- tryLogger("%-24s %s".format("Started container:", headlessName))
+      _                 <- tryLogger("%-24s %s".format("Started container:", headedNode.name))
       _                 <- startContainer(client, headedContainer.getId)
-      _                 <- tryLogger("%-24s %s".format("Started container:", headedName))
+      _                 <- tryLogger("%-24s %s".format("Started container:", headlessNode.name))
     } yield List(headlessContainer, headedContainer)
 
   val aliceAgentURI: AtomicReference[String] = new AtomicReference[String]("")

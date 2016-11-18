@@ -7,6 +7,8 @@ import akka.actor.{ActorRef, ActorSystem, Scheduler}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.biosimilarity.evaluator.spray.client.ApiClient
+import com.github.dockerjava.api.DockerClient
+import org.slf4j.Logger
 import spray.can.Http
 import spray.http.HttpMethods.GET
 import spray.http.{HttpRequest, HttpResponse, Uri}
@@ -14,6 +16,7 @@ import spray.io.{ClientSSLEngineProvider, SSLContextProvider}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 package object test extends ApiClient {
 
@@ -33,17 +36,14 @@ package object test extends ApiClient {
       }
       Await.result(e, delay * (retries + 1))
     } finally {
-      connector.map((ref: ActorRef) => ref.ask(Http.CloseAll))
+      connector.flatMap((ref: ActorRef) => ref.ask(Http.CloseAll))
     }
   }
 
   private object TrustfulX509TrustManager extends X509TrustManager {
-
     def checkClientTrusted(chain: Array[X509Certificate], authType: String): Unit = ()
-
     def checkServerTrusted(chain: Array[X509Certificate], authType: String): Unit = ()
-
-    def getAcceptedIssuers: Array[X509Certificate] = Array[X509Certificate]()
+    def getAcceptedIssuers: Array[X509Certificate]                                = Array[X509Certificate]()
   }
 
   private def trustfulSSLContext: SSLContext = {
@@ -54,4 +54,14 @@ package object test extends ApiClient {
 
   def trustfulClientSSLEngineProvider: ClientSSLEngineProvider =
     ClientSSLEngineProvider(identity)(SSLContextProvider.forContext(trustfulSSLContext))
+
+  def setupTestNetwork(client: DockerClient, network: DockerNetwork)(implicit logger: Logger): Unit =
+    createOrGetNetwork(client, network) match {
+      case Success(x) =>
+        logger.info("%-24s %s".format("Using network:", x.name))
+      case Failure(exception) =>
+        throw exception
+    }
+
+  def tryLogger(msg: String)(implicit logger: Logger): Try[Unit] = Try(logger.info(msg))
 }

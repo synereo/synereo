@@ -15,25 +15,19 @@ import org.slf4j.{Logger, LoggerFactory}
 import spray.http.Uri
 
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
-import scala.util.{Failure, Random, Success, Try}
+import scala.util.{Failure, Random, Success}
 
 class SimpleDualNodeTest extends ApiTests(Uri("https://localhost:9876/api"), trustfulClientSSLEngineProvider) with BeforeAndAfterAll {
 
-  val logger: Logger = LoggerFactory.getLogger(classOf[SimpleDualNodeTest])
-
-  val timeoutLength: Int = 120
-
-  implicit val timeout: Timeout = Timeout(FiniteDuration(timeoutLength, SECONDS))
-
+  val logger: Logger                   = LoggerFactory.getLogger(classOf[SimpleDualNodeTest])
+  val timeoutLength: Int               = 120
+  implicit val timeout: Timeout        = Timeout(FiniteDuration(timeoutLength, SECONDS))
   override implicit val patienceConfig = PatienceConfig(timeout = Span(timeoutLength, Seconds), interval = Span(1, Second))
 
-  def containerName(): String = s"SimpleDualNodeTest-${java.util.UUID.randomUUID().toString}"
+  val client: DockerClient       = getDockerClient().get
+  val testNetwork: DockerNetwork = DockerNetwork("synereo", "10.100.101.0/24")
 
   val deleteNetworkAfterTests: AtomicBoolean = new AtomicBoolean(false)
-
-  val client: DockerClient = getDockerClient().get
-
-  val testNetwork: DockerNetwork = DockerNetwork("synereo", "10.100.101.0/24")
 
   override def beforeAll(): Unit =
     createOrGetNetwork(client, testNetwork) match {
@@ -47,12 +41,10 @@ class SimpleDualNodeTest extends ApiTests(Uri("https://localhost:9876/api"), tru
 
     val destroyContainerAfterTest: AtomicBoolean = new AtomicBoolean(true)
 
-    val headlessName: String    = containerName() + s"-$Headless"
-    val headedName: String      = containerName() + s"-$Headed"
     val rs: Iterator[Int]       = Random.shuffle(2 to 254).toIterator
     val ae: Map[String, String] = Map("TWEET_LEVEL" -> "warning")
 
-    lazy val headlessNode: Node = HeadlessNode(name = headlessName,
+    lazy val headlessNode: Node = HeadlessNode(name = s"SimpleDualNodeTest-${java.util.UUID.randomUUID().toString}" + s"-$Headless",
                                                deploymentMode = Distributed,
                                                address = new InetSocketAddress(s"10.100.101.${rs.next()}", 5672),
                                                dslCommLinkServer = headlessNode,
@@ -67,7 +59,7 @@ class SimpleDualNodeTest extends ApiTests(Uri("https://localhost:9876/api"), tru
                                                exposedRabbitManagementPort = Some(55672),
                                                suspendForDebugger = false)
 
-    lazy val headedNode: Node = HeadedNode(name = headedName,
+    lazy val headedNode: Node = HeadedNode(name = s"SimpleDualNodeTest-${java.util.UUID.randomUUID().toString}" + s"-$Headed",
                                            deploymentMode = Distributed,
                                            address = new InetSocketAddress(s"10.100.101.${rs.next()}", 5672),
                                            dslCommLinkServer = headedNode,
@@ -95,10 +87,10 @@ class SimpleDualNodeTest extends ApiTests(Uri("https://localhost:9876/api"), tru
     }
 
     try {
-      logger.info("%-24s %s".format("Waiting for server:", headedName))
+      logger.info("%-24s %s".format("Waiting for server:", headedNode.name))
       spinwaitOnServer(system, apiUri, FiniteDuration(5, SECONDS), 20)(ec, system.scheduler, timeout)
 
-      logger.info("%-24s %s".format("Waiting for quiescence:", headedName))
+      logger.info("%-24s %s".format("Waiting for quiescence:", headedNode.name))
       Thread.sleep(45000L)
 
       logger.info("%-24s %s".format("Starting test:", test.name))
