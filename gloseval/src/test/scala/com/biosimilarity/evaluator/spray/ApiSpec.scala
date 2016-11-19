@@ -9,7 +9,6 @@ import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.spray.client.ApiClient
 import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.util._
-import helpers.wiremock.OmniCoreStubServer
 import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -345,7 +344,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
         val content = (rsp \ "content").extract[OmniBalanceResponse]
 
         msgType shouldBe "omniBalanceResponse"
-        content.amp shouldEqual "42.00000000"
+        content.amp shouldEqual """0.00"""
       }
     }
 
@@ -355,7 +354,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           uri      <- Future(apiUri)
           hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
           adminIsr <- openAdminSession(hc, uri, "admin@localhost", "a")
-          alice    <- createSRPUser(hc, "alice@testing.com", "alice", "a")
+          alice    <- createSRPUser(hc, uri, "alice@testing.com", "alice", "a")
           isrA     <- {
                         println(s"User $alice created")
                         openSRPSession(hc, uri, "alice@testing.com", "a")
@@ -600,13 +599,7 @@ class ApiSpec extends ApiTests(Uri("https://localhost:9876/api"), clientSSLEngin
 
   var serverInstance: Option[Server] = None
 
-  var omniCoreStubServer: OmniCoreStubServer = null
-
   override def beforeEach(): Unit = {
-    if(EvalConfigWrapper.isOmniRequired) {
-      omniCoreStubServer = new OmniCoreStubServer()
-      omniCoreStubServer.start()
-    }
     resetMongo()
     serverInstance = Some(Server().start())
     Thread.sleep(10000L)
@@ -616,9 +609,5 @@ class ApiSpec extends ApiTests(Uri("https://localhost:9876/api"), clientSSLEngin
   override def afterEach(): Unit = {
     serverInstance.map(_.stop())
     serverInstance = None
-    if(EvalConfigWrapper.isOmniRequired) {
-      omniCoreStubServer.stop()
-      omniCoreStubServer = null
-    }
   }
 }

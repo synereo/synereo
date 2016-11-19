@@ -4,12 +4,10 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
-import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.distribution.EvalConfigWrapper._
 import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.spray.directives.HttpsDirectives.StrictTransportSecurity
 import com.biosimilarity.evaluator.util._
-import helpers.wiremock.OmniCoreStubServer
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
 import spray.can.Http
@@ -26,7 +24,6 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
   import system.dispatcher
 
   var serverInstance: Option[Server] = None
-  var omniCoreStubServer: OmniCoreStubServer = null
 
   // Set up the Spray client's "Host-level" API for doing requests over TLS
   val eventualHostConnector: Future[ActorRef] = IO(Http)(system)
@@ -35,10 +32,6 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
     .map((hci: Http.HostConnectorInfo) => hci.hostConnector)
 
   override def beforeAll(): Unit = {
-    if(EvalConfigWrapper.isOmniRequired) {
-      omniCoreStubServer = new OmniCoreStubServer()
-      omniCoreStubServer.start()
-    }
     resetMongo()
     serverInstance = Some(Server().start())
   }
@@ -46,10 +39,6 @@ class ServerSpec extends WordSpec with Matchers with BeforeAndAfterAll with Scal
   override def afterAll(): Unit = {
     serverInstance.map(_.stop())
     serverInstance = None
-    if(EvalConfigWrapper.isOmniRequired) {
-      omniCoreStubServer.stop()
-      omniCoreStubServer = null
-    }
   }
 
   "A GET request sent over http to the '/api' route of a running instance of Server" should {

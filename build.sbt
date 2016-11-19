@@ -158,8 +158,7 @@ lazy val glosevalDeps = Seq(
   "org.shredzone.acme4j"        % "acme4j-client"            % acme4jVersion,
   "org.shredzone.acme4j"        % "acme4j-utils"             % acme4jVersion,
   "org.bouncycastle"            % "bcprov-jdk15on"           % "1.54",
-  "org.scalatest"              %% "scalatest"                % scalatestVersion % "test",
-  "com.github.tomakehurst"      % "wiremock"                 % "2.3.1" % "test")
+  "org.scalatest"              %% "scalatest"                % scalatestVersion % "test")
 
 val buildBaseImage      = taskKey[Unit]("Builds the 'synereo/base' Docker Image")
 val copyClientResources = taskKey[Unit]("Copy the 'client' directory to the Docker staging directory")
