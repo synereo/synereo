@@ -1,3 +1,4 @@
+dist: trusty
 sudo: required
 
 language: scala
@@ -11,7 +12,15 @@ jdk:
 services:
   - mongodb
   - rabbitmq
-  - memcached
+
+env:
+  - OMNICORE_VERSION="0.0.11.1-rel"
+
+before_install: ./scripts/travis.sh
+
+before_script:
+  - eval $(./scripts/setup_omni.sh)
+  - echo $PROPERTY_ID
 
 script: sbt ++$TRAVIS_SCALA_VERSION test:compile &&
     sbt ++$TRAVIS_SCALA_VERSION specialk/test &&
@@ -23,6 +32,7 @@ cache:
   directories:
     - $HOME/.ivy2/cache
     - $HOME/.sbt
+    - $HOME/omnicore-$OMNICORE_VERSION
 
 before_cache:
   - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
