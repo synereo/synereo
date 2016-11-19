@@ -287,14 +287,13 @@ lazy val worlock = (project in file("worlock"))
   .dependsOn(gloseval % "test->test;compile->compile")
 
 lazy val walletDeps = Seq(
-  "com.typesafe"           % "config"          % configVersion,
-  "org.json4s"             %% "json4s-jackson" % json4sVersion,
-  "org.json4s"             %% "json4s-native"  % json4sVersion,
-  "org.bitcoinj"           % "bitcoinj-core"   % "0.14.3" exclude("org.slf4j", "slf4j-api"),
-  "foundation.omni"        % "omnij-core"      % "0.4.0" exclude("org.slf4j", "slf4j-api"),
-  "foundation.omni"        % "omnij-rpc"       % "0.4.0" exclude("org.slf4j", "slf4j-api"),
-  "org.scalatest"          %% "scalatest"      % scalatestVersion % "test"
-)
+  "com.typesafe"     % "config"         % configVersion,
+  "org.json4s"      %% "json4s-jackson" % json4sVersion,
+  "org.json4s"      %% "json4s-native"  % json4sVersion,
+  "org.bitcoinj"     % "bitcoinj-core"  % "0.14.3" exclude("org.slf4j", "slf4j-api"),
+  "foundation.omni"  % "omnij-core"     % "0.4.0"  exclude("org.slf4j", "slf4j-api") exclude("org.slf4j", "slf4j-jdk14"),
+  "foundation.omni"  % "omnij-rpc"      % "0.4.0"  exclude("org.slf4j", "slf4j-api") exclude("org.slf4j", "slf4j-jdk14"),
+  "org.scalatest"   %% "scalatest"      % scalatestVersion % "test")
 
 lazy val walletSettings = Seq(
   name := "wallet",
