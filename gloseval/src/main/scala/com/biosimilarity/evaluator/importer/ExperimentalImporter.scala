@@ -13,16 +13,13 @@ import com.biosimilarity.evaluator.spray.client.ApiClient
 import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration.clientSSLEngineProvider
 import com.biosimilarity.evaluator.util._
 import com.biosimilarity.evaluator.util.mongo.MongoQuery
-
 import org.json4s._
-import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-
 import org.slf4j.{Logger, LoggerFactory}
 import spray.http.{HttpResponse, Uri}
 
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.{Duration, FiniteDuration, SECONDS}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 class ExperimentalImporter(host: Uri) extends ApiClient {
@@ -207,7 +204,7 @@ class ExperimentalImporter(host: Uri) extends ApiClient {
       descs = makeAgentDescsById(prs)
       cnxnLabels = makeCnxnLabels(agentsById)
       _ <- makeConnections(hc, cnxnLabels, adminSession, agentsById)
-      //_ <- importPosts(hc, adminSession, agentsById, descs, cnxnLabels)
+      _ <- importPosts(hc, adminSession, agentsById, descs, cnxnLabels)
       _ <- closeSession(hc, host, adminSession)
     } yield printStats()
   }

@@ -1279,23 +1279,21 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
                 (optRsrc: Option[mTT.Resource]) => {
                   BasicLogService.tweet("establishConnection | read : optRsrc = " + optRsrc)
                   def handleRsp(v: ConcreteHL.HLExpr): Unit = {
-                    val optList: Option[List[BiCnxn]] = v match {
+                    val newBiCnxnList = v match {
                       case PostedExpr((PostedExpr(previousBiCnxnListStr: String), _, _, _)) => {
                         val extants = Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
-                        if (extants.contains(bBiCnxn) ) None
-                        else Some(bBiCnxn :: extants)
+                        if (extants.contains(bBiCnxn) ) extants
+                        else bBiCnxn :: extants
                       }
-                      case Bottom => Some(List(bBiCnxn))
+                      case Bottom => List(bBiCnxn)
                     }
-                    for (newBiCnxnList <- optList) {
-                      put(
-                        biCnxnsListLabel,
-                        List(bAliasCnxn),
-                        Serializer.serialize(newBiCnxnList),
-                        (optRsrc: Option[mTT.Resource]) =>
-                          BasicLogService.tweet("establishConnection | onPut : optRsrc = " + optRsrc)
-                        )
-                    }
+                    put(
+                      biCnxnsListLabel,
+                      List(bAliasCnxn),
+                      Serializer.serialize(newBiCnxnList),
+                      (optRsrc: Option[mTT.Resource]) =>
+                        BasicLogService.tweet("establishConnection | onPut : optRsrc = " + optRsrc)
+                    )
                     SessionManager.cometMessage(sessionURI, compact(render(
                       ("msgType" -> "establishConnectionResponse") ~
                         ("content" ->
@@ -1324,14 +1322,14 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
       List(aAliasCnxn),
       (optRsrc: Option[mTT.Resource]) => {
         def handleRsp(v: ConcreteHL.HLExpr): Unit = {
-          val optList: Option[List[BiCnxn]] = v match {
+          val l: List[BiCnxn] = v match {
             case PostedExpr((PostedExpr(previousBiCnxnListStr: String), _, _, _)) =>
               val extants = Serializer.deserialize[List[PortableAgentBiCnxn]](previousBiCnxnListStr)
-              if (extants.contains(aBiCnxn) ) None
-              else Some(aBiCnxn :: extants)
-            case Bottom => Some(List(aBiCnxn))
+              if (extants.contains(aBiCnxn) ) extants
+              else aBiCnxn :: extants
+            case Bottom => List(aBiCnxn)
           }
-          for (l <- optList) doPut(l)
+          doPut(l)
         }
         optRsrc match {
           case None => ()
