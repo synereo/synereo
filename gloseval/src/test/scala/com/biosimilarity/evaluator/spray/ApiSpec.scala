@@ -120,7 +120,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           isr        <- openAdminSession(hc, uri, "admin@localhost", "a")
           _          <- makeQueryOnSelf(hc, uri, isr.sessionURI, "each([MESSAGEPOSTLABEL])")
           sessionUri <- spawnSession(hc, uri, isr.sessionURI)
-          jArray     <- sessionPing(hc, uri, sessionUri)
+          jArray     <- pingUntilPong(hc, uri, sessionUri)
           _          <- hc.ask(Http.CloseAll)
         } yield jArray).recover {
           case e: Throwable =>
@@ -510,7 +510,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           _        <- makeQueryOnSelf(hc, uri, ssn, "each([MESSAGEPOSTLABEL])")
           _        <- makeQueryOnSelf(hc, uri, ssn, "any([MESSAGEPOSTLABEL])")
           _        <- makeQueryOnSelf(hc, uri, ssn, "all([MESSAGEPOSTLABEL])")
-          jArray   <- sessionPing(hc, uri, ssn)
+          jArray   <- pingUntilPong(hc, uri, ssn)
           _        <- hc.ask(Http.CloseAll)
         } yield jArray).recover {
           case e: Throwable =>
@@ -602,8 +602,7 @@ class ApiSpec extends ApiTests(Uri("https://localhost:9876/api"), clientSSLEngin
   override def beforeEach(): Unit = {
     resetMongo()
     serverInstance = Some(Server().start())
-    Thread.sleep(10000L)
-    logger.info("finished waiting")
+    Thread.sleep(15000L)
   }
 
   override def afterEach(): Unit = {
