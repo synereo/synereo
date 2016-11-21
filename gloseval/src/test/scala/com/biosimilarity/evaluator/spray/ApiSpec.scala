@@ -344,7 +344,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
         val content = (rsp \ "content").extract[OmniBalanceResponse]
 
         msgType shouldBe "omniBalanceResponse"
-        content.amp shouldEqual """0.00"""
+        content.amp shouldEqual """0.00000000"""
       }
     }
 
