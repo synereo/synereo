@@ -47,7 +47,7 @@ object Containable {
         "DSL_COMM_LINK_CLIENT_HOSTS" ->
           n.dslCommLinkClients
             .foldLeft(List.empty[String]) { (accum: List[String], node: Node) =>
-              node.address.getAddress.toString.substring(1) + ":" + node.address.getPort.toString :: accum
+              node.address.getHostString + ":" + node.address.getPort.toString :: accum
             }
             .mkString(","),
         "DSL_EVALUATOR_HOST" ->
