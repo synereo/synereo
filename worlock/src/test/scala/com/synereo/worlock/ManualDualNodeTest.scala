@@ -37,7 +37,7 @@ class ManualDualNodeTest extends WordSpec with ApiClient with Matchers with Scal
   val apiUri                     = Uri("https://localhost:9876/api")
   val ae: Map[String, String]    = Map("TWEET_LEVEL" -> "warning")
 
-  lazy val headlessNode: Node = HeadlessNode(name = "headlessNode",
+  lazy val headlessNode: Node = HeadlessNode(name = s"headlessNode-${java.util.UUID.randomUUID()}",
                                              deploymentMode = Distributed,
                                              address = new InetSocketAddress(s"10.100.101.2", 5672),
                                              dslCommLinkServer = headlessNode,
@@ -52,7 +52,7 @@ class ManualDualNodeTest extends WordSpec with ApiClient with Matchers with Scal
                                              exposedRabbitManagementPort = Some(55672),
                                              suspendForDebugger = false)
 
-  lazy val headedNode: Node = HeadedNode(name = "headedNode",
+  lazy val headedNode: Node = HeadedNode(name = s"headedNode-${java.util.UUID.randomUUID()}",
                                          deploymentMode = Distributed,
                                          address = new InetSocketAddress(s"10.100.101.3", 5672),
                                          dslCommLinkServer = headedNode,
@@ -72,6 +72,22 @@ class ManualDualNodeTest extends WordSpec with ApiClient with Matchers with Scal
                                          suspendForDebugger = false)
 
   def setupNetwork(): Unit = setupTestNetwork(client, testNetwork)
+
+  def setupHeaded(): Try[CreateContainerResponse] =
+    for {
+      network         <- Try(testNetwork)
+      headedContainer <- createContainer(client, network, headedNode, ae)
+      _               <- tryLogger("%-24s %s".format("Started container:", headedNode.name))
+      _               <- startContainer(client, headedContainer.getId)
+    } yield headedContainer
+
+  def setupHeadless(): Try[CreateContainerResponse] =
+    for {
+      network           <- Try(testNetwork)
+      headlessContainer <- createContainer(client, network, headlessNode, ae)
+      _                 <- tryLogger("%-24s %s".format("Started container:", headlessNode.name))
+      _                 <- startContainer(client, headlessContainer.getId)
+    } yield headlessContainer
 
   def setupContainers(): Try[List[CreateContainerResponse]] =
     for {
