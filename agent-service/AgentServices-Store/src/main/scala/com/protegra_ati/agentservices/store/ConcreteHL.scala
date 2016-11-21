@@ -103,6 +103,8 @@ object ConcreteHL extends Serializable {
       extends HLExpr
       with Result[Value]
 
+  // If you have got this far, and know this does, please contact us
+  // for possible employment
   trait SystemRequest
   trait SystemResponse
 
@@ -117,4 +119,19 @@ object ConcreteHL extends Serializable {
                                 stdErr: Seq[String])
       extends HLExpr
       with SystemResponse
+
+  // Groundwork for administration of nodes
+  trait AdminRequest
+  trait AdminResponse
+
+  // Dynamic connection of clients
+  case class ConnectToClientRequest(
+    uris : Seq[URI]
+  ) extends HLExpr
+      with AdminRequest
+
+  case class ConnectToClientResponse(
+    biCnxn : PortableAgentBiCnxn
+  ) extends HLExpr
+  with AdminResponse
 }

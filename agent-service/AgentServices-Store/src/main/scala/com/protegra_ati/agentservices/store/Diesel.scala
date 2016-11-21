@@ -2210,6 +2210,61 @@ package diesel {
         }
       }
 
+      def evaluateSystemRequest[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+        node : String
+      )( expr : ConcreteHL.SystemRequest )(
+        handler : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit
+      ): Unit = {
+        BasicLogService.tweet(
+          "entering method: evaluateSystemRequest"
+          + "\nthis: " + this
+          + "\nnode: " + node
+          + "\nexpr: " + expr
+          + "\nhandler: " + handler
+          + "\n-----------------------------------------"
+          + "\n n: " + EvalNodeMapper.get( node )
+        )
+        for ( n <- EvalNodeMapper.get( node ) ) {
+          expr match {
+            case runProcRq@ConcreteHL.RunProcessRequest( cmd, wkDir, env ) => {
+              try {
+                val runProcRsp = ProcessRunner.run( runProcRq )
+                handler( Some( mTT.Ground( runProcRsp ) ), None, None )
+              }
+              catch {
+                case e : Throwable => {
+                  val runProcRsp = ConcreteHL.RunProcessResponse( -1, Nil, Nil )
+                  handler( Some( mTT.Ground( runProcRsp ) ), None, None )
+                }
+              }
+            }
+          }
+        }
+      }
+
+      def evaluateAdminRequest[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
+        node : String
+      )( expr : ConcreteHL.AdminRequest )(
+        handler : (Option[mTT.Resource], Option[CnxnCtxtLabel[String,String,String]], Option[acT.AgentCnxn]) => Unit
+      ): Unit = {
+        BasicLogService.tweet(
+          "entering method: evaluateSystemRequest"
+          + "\nthis: " + this
+          + "\nnode: " + node
+          + "\nexpr: " + expr
+          + "\nhandler: " + handler
+          + "\n-----------------------------------------"
+          + "\n n: " + EvalNodeMapper.get( node )
+        )
+        for ( n <- EvalNodeMapper.get( node ) ) {
+          expr match {
+            case ctcRq@ConcreteHL.ConnectToClientRequest( uris ) => {
+              throw new Exception( "???" )
+            }
+          }
+        }
+      }
+
       def evaluateExpression[ReqBody <: PersistedKVDBNodeRequest, RspBody <: PersistedKVDBNodeResponse](
         node : String
       )( expr : ConcreteHL.HLExpr )(
@@ -2763,18 +2818,12 @@ package diesel {
                 
                 handler( Some( mTT.Ground( ConcreteHL.Bottom ) ), Some(filter), Some(agntCnxn) )
               }
-            }
-            case runProcRq@ConcreteHL.RunProcessRequest( cmd, wkDir, env ) => {
-              try {
-                val runProcRsp = ProcessRunner.run( runProcRq )
-                handler( Some( mTT.Ground( runProcRsp ) ), None, None )
+            }            
+            case sysRq : ConcreteHL.SystemRequest => {
+              evaluateSystemRequest( node )( sysRq )( handler )
               }
-              catch {
-                case e : Throwable => {
-                  val runProcRsp = ConcreteHL.RunProcessResponse( -1, Nil, Nil )
-                  handler( Some( mTT.Ground( runProcRsp ) ), None, None )
-                }
-              }
+            case adminRq : ConcreteHL.AdminRequest => {
+              evaluateAdminRequest( node )( adminRq )( handler )
             }
           }
         }
