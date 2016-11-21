@@ -27,7 +27,7 @@ omnicore-cli sendtoaddress "$COIN_ADDRESS" 25 &>/dev/null
 
 omnicore-cli setgenerate true 1 &>/dev/null
 
-omnicore-cli omni_sendissuancefixed "$COIN_ADDRESS" "2" 2 0 "" "" "TestCoin" "" "created by for testing AMPs" "1000000000" &>/dev/null
+omnicore-cli omni_sendissuancefixed "$COIN_ADDRESS" "2" 2 0 "" "" "SynereoCoin" "" "created by for testing AMPs" "1000000000" &>/dev/null
 
 omnicore-cli setgenerate true 1 &>/dev/null
 

@@ -28,8 +28,6 @@ trait RPCConfiguration {
 
   val isRegTestMode = networkMode.equals("RegTest")
 
-  val isMainNetMode = networkMode.equals("MainNet")
-
   val rpcUser      = config.getString("omni.rpcUser")
   val rpcPassword  = config.getString("omni.rpcPassword")
   val rpcURL       = config.getString("omni.rpcUrl")
@@ -37,17 +35,20 @@ trait RPCConfiguration {
   val omniClient   = new OmniClient(rpcConfig)
 
   val propertyName = "SynereoCoin"
+  val propertyId = config.getString("property.id")
 
   val MIN_NUM_OF_CONFIRMATIONS: Int = 1
 
   def isHealthy = Try(omniClient.getInfo).isSuccess
 
   lazy val ampsID: CurrencyID = if(isHealthy) {
-    if(isMainNetMode) CurrencyID.AMP
-    else {
-      val properties = omniClient.omniListProperties().toList.filter(p => p.getName.equals(propertyName))
-      if(properties.nonEmpty) properties.head.getPropertyid
-      else throw new Exception("Synereo Coin property is missing")
+    networkMode match {
+      case "MainNet" => CurrencyID.AMP
+      case "TestNet" => new CurrencyID(propertyId.toLong)
+      case _ =>
+        val properties = omniClient.omniListProperties().toList.filter(p => p.getName.equals(propertyName))
+        if(properties.nonEmpty) properties.head.getPropertyid
+        else throw new Exception("Synereo Coin property is missing")
     }
   } else throw new Exception("Unable to connect to OmniCore")
 }
