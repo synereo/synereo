@@ -2259,7 +2259,18 @@ package diesel {
         for ( n <- EvalNodeMapper.get( node ) ) {
           expr match {
             case ctcRq@ConcreteHL.ConnectToClientRequest( uris ) => {
-              throw new Exception( "???" )
+              val _ = ptToMany(
+                new URI( "agent", null, localHost, localPort, dataLocation, null, null ),
+                uris.toList
+              )
+            }
+            case seRq@ConcreteHL.StartEngineRequest( cfgFN ) => {
+              val e = new DieselEngineCtor.DieselEngine( Some( cfgFN ) )
+              val nodeId = UUID.randomUUID()
+              val nodeKey = nodeId.toString
+
+              EvalNodeMapper += ( nodeKey -> DieselEngineCtor.dslEvaluatorAgent( ) )
+              e.indirectStdLooper( nodeKey )
             }
           }
         }
@@ -2824,6 +2835,9 @@ package diesel {
               }
             case adminRq : ConcreteHL.AdminRequest => {
               evaluateAdminRequest( node )( adminRq )( handler )
+            }
+            case unknownRq => {
+              throw new Exception( s"Unexpected request: ${unknownRq}" )
             }
           }
         }
