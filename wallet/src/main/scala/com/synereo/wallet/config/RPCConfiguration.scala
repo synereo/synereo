@@ -39,7 +39,7 @@ trait RPCConfiguration {
 
   val MIN_NUM_OF_CONFIRMATIONS: Int = 1
 
-  def isHealthy = Try(omniClient.getInfo).isSuccess
+  lazy val isHealthy = Try(omniClient.getInfo).isSuccess
 
   lazy val ampsID: CurrencyID = if(isHealthy) {
     networkMode match {

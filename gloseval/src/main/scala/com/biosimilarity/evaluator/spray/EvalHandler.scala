@@ -2670,7 +2670,7 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
 
     //VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, agentMgr().feed _)
     VerificationBehaviors().launchClaimantBehavior(aliasCnxn.src, feed _)
-    if(EvalConfigWrapper.isOmniRequired)
+    if(AMPKey.isHealthy)
       commenceInstance(
         omniProtocolCnxn,
         omniLabel,
@@ -3267,32 +3267,32 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
   }
 
   def storePrivKey(cap: String): Unit = {
-    if(EvalConfigWrapper.isOmniRequired) {
-      val capSelfCnxn = getCapSelfCnxn(cap)
-      val ampKey = AMPKey(cap)
-      try {
-        postToCnxnLabel(ampKeyLabel, capSelfCnxn, ampKey.privHex, optRsrc => {
-          println("EC key persisted: " + optRsrc)
-          if(AMPKey.isRegTestMode && emailToCap(EvalConfigWrapper.email).equals(cap) && !EvalConfigWrapper.isTestMode) {
-            ampKey.createTestCurrencyAndFundTheUser()
-          }
-        })
-      } catch {
-        case e: Throwable =>
-          println(s"Error on creation EC key for user $cap")
-          e.printStackTrace()
-      }
+    val capSelfCnxn = getCapSelfCnxn(cap)
+    val ampKey = AMPKey(cap)
+    try {
+      postToCnxnLabel(ampKeyLabel, capSelfCnxn, ampKey.privHex, optRsrc => {
+        println("EC key persisted: " + optRsrc)
+        if(AMPKey.isHealthy
+           && AMPKey.isRegTestMode
+           && emailToCap(EvalConfigWrapper.email).equals(cap)
+           && !EvalConfigWrapper.isTestMode) {
+          ampKey.createTestCurrencyAndFundTheUser()
+        }
+      })
+    } catch {
+      case e: Throwable =>
+        println(s"Error on creation EC key for user $cap")
+        e.printStackTrace()
     }
   }
 
   def omniBalanceRequest(json: JObject): Unit = sendBalanceRequestMessage((json \ "sessionURI").extract[String])
 
-  def sendBalanceRequestMessage(sessionURI: String): Unit = {
+  def sendBalanceRequestMessage(sessionURI: String): Unit = if(AMPKey.isHealthy) {
     val cap = capFromSession(sessionURI)
     val capSelfCnxn = getCapSelfCnxn(cap)
 
     try {
-      if(!EvalConfigWrapper.isOmniRequired) throw new Exception("Not supported")
       fetchPrivKey(cap, hex => {
         listenOmniMessages
         postOmniMessage(
@@ -3306,14 +3306,13 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     }
   }
 
-  def sendAmpsRequest(json: JObject): Unit = {
+  def sendAmpsRequest(json: JObject): Unit = if(AMPKey.isHealthy) {
     val sessionURI = (json \ "sessionURI").extract[String]
     val fromCap = capFromSession(sessionURI)
     val toCap = (json \ "target").extract[String]
     val amount = (json \ "amount").extract[String]
 
     try {
-      if(!EvalConfigWrapper.isOmniRequired) throw new Exception("Not supported")
       fetchPrivKey(fromCap, from => fetchPrivKey(toCap, to =>
         postOmniMessage(
           SendAmpsRequestMessage.toLabel,
@@ -3327,13 +3326,12 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     }
   }
 
-  def receiveBTCRequest(json: JObject): Unit = {
+  def receiveBTCRequest(json: JObject): Unit = if(AMPKey.isHealthy) {
     val sessionURI = (json \ "sessionURI").extract[String]
     val cap = capFromSession(sessionURI)
     val amount = (json \ "amount").extract[String]
 
     try {
-      if(!(EvalConfigWrapper.isOmniRequired && AMPKey.isRegTestMode)) throw new Exception("Not supported")
       fetchPrivKey(cap, to =>
         postOmniMessage(
           ReceiveBTCRequestMessage.toLabel,
@@ -3347,14 +3345,13 @@ trait EvalHandler extends CapUtilities with BTCCryptoUtilities {
     }
   }
 
-  def receiveAMPRequest(json: JObject): Unit = {
+  def receiveAMPRequest(json: JObject): Unit = if(AMPKey.isHealthy) {
     val sessionURI = (json \ "sessionURI").extract[String]
     val cap = capFromSession(sessionURI)
     val fromAddress = (json \ "from").extract[String]
     val amount = (json \ "amount").extract[String]
 
     try {
-      if(!(EvalConfigWrapper.isOmniRequired && AMPKey.isRegTestMode)) throw new Exception("Not supported")
       fetchPrivKey(cap, to =>
         postOmniMessage(
           ReceiveAMPRequestMessage.toLabel,

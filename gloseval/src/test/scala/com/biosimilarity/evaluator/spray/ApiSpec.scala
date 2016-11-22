@@ -9,6 +9,7 @@ import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.spray.client.ApiClient
 import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.util._
+import com.synereo.wallet.models.AMPKey
 import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -330,21 +331,26 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
 
       val eventualJArray: Future[(JArray)] =
         for {
-          uri      <- Future(apiUri)
-          hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
-          adminIsr <- openAdminSession(hc, uri, "admin@localhost", "a")
-          _        <- makeBalanceRequest(hc, uri, adminIsr.sessionURI)
-          jArray   <- pingUntilTheType(hc, uri, adminIsr.sessionURI, "omniBalanceResponse")
-          _        <- hc.ask(Http.CloseAll)
+          uri       <- Future(apiUri)
+          hc        <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          adminIsr  <- openAdminSession(hc, uri, "admin@localhost", "a")
+          status    <- makeBalanceRequest(hc, uri, adminIsr.sessionURI).map(_.status.intValue)
+          jArray    <- if(status == 403) Future(JArray(List()))
+                       else pingUntilTheType(hc, uri, adminIsr.sessionURI, "omniBalanceResponse")
+          _         <- hc.ask(Http.CloseAll)
         } yield jArray
 
       whenReady(eventualJArray) { (jArray: JArray) =>
-        val rsp = jArray.arr.head.asInstanceOf[JObject]
-        val msgType = (rsp \ "msgType").extract[String]
-        val content = (rsp \ "content").extract[OmniBalanceResponse]
+        if(AMPKey.isHealthy) {
+          val rsp = jArray.arr.head.asInstanceOf[JObject]
+          val msgType = (rsp \ "msgType").extract[String]
+          val content = (rsp \ "content").extract[OmniBalanceResponse]
 
-        msgType shouldBe "omniBalanceResponse"
-        content.amp shouldEqual """0.00000000"""
+          msgType shouldBe "omniBalanceResponse"
+          content.amp shouldEqual """0.00000000"""
+        } else {
+          jArray.arr.isEmpty shouldBe true
+        }
       }
     }
 
@@ -359,17 +365,22 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
                         println(s"User $alice created")
                         openSRPSession(hc, uri, "alice@testing.com", "a")
                       }
-          _        <- makeSendAmpsRequest(hc, uri, adminIsr.sessionURI, isrA.sessionURI, "10")
-          jArray   <- pingUntilTheType(hc, uri, adminIsr.sessionURI, "omniBalanceResponse")
+          status   <- makeSendAmpsRequest(hc, uri, adminIsr.sessionURI, isrA.sessionURI, "10").map(_.status.intValue)
+          jArray   <- if(status == 403) Future(JArray(List()))
+                      else  pingUntilTheType(hc, uri, adminIsr.sessionURI, "omniBalanceResponse")
           _        <- hc.ask(Http.CloseAll)
         } yield jArray
 
       whenReady(eventualJArray) { (jArray: JArray) =>
-        val rsp = jArray.arr.head.asInstanceOf[JObject]
-        val msgType = (rsp \ "msgType").extract[String]
-        val content = (rsp \ "content").extract[OmniBalanceResponse]
+        if(AMPKey.isHealthy) {
+          val rsp = jArray.arr.head.asInstanceOf[JObject]
+          val msgType = (rsp \ "msgType").extract[String]
+          val content = (rsp \ "content").extract[OmniBalanceResponse]
 
-        msgType shouldBe "omniBalanceResponse"
+          msgType shouldBe "omniBalanceResponse"
+        } else {
+          jArray.arr.isEmpty shouldBe true
+        }
       }
     }
 

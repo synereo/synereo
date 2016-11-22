@@ -1,7 +1,5 @@
 package com.synereo.wallet.models
 
-import java.math.BigDecimal
-
 import com.synereo.wallet.OmniAPI
 import com.synereo.wallet.config.RPCConfiguration
 import org.bitcoinj.core.ECKey
@@ -24,7 +22,7 @@ object AMPKey extends Serializable with OmniAPI {
 
   def apply(cap: String): AMPKey = {
     val instance = new AMPKey(cap, newECKey)
-    importAddress(instance.addressStr)
+    if(isHealthy) importAddress(instance.addressStr)
     instance
   }
 }

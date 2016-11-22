@@ -6,6 +6,7 @@ import akka.actor._
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.spray.directives.{CORSSupport, HttpsDirectives}
 import com.biosimilarity.lift.lib._
+import com.synereo.wallet.models.AMPKey
 import org.json4s.JsonDSL._
 import org.json4s._
 import org.json4s.native.JsonMethods._
@@ -93,6 +94,9 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
     ("setAmpWalletAddress", omniSetAmpWalletAddress)
   )
 
+  @transient
+  val omniMessages: Seq[String] = Seq("omniBalanceRequest", "sendAmpsRequest", "receiveBTCRequest", "receiveAMPRequest")
+
   def handleAsyncPosts(ctx: RequestContext, msgType: String, content: JObject): Unit =
     (content \ "sessionURI").extractOpt[String] match {
       case None =>
@@ -114,9 +118,13 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
               case _ =>
                 asyncMethods.get(msgType) match {
                   case Some(fn) =>
-                    cometActor ! SessionActor.ItemReceived(msgType, content)
-                    ctx.complete(StatusCodes.OK)
-                    fn(content)
+                    if(omniMessages.contains(msgType) && !AMPKey.isHealthy) {
+                      ctx.complete(StatusCodes.Forbidden)
+                    } else {
+                      cometActor ! SessionActor.ItemReceived(msgType, content)
+                      ctx.complete(StatusCodes.OK)
+                      fn(content)
+                    }
                   case _ =>
                     ctx.complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
                 }

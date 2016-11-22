@@ -31,7 +31,7 @@ class Server(settings: ServerSettings, actorSystem: Option[ActorSystem] = None, 
       SRPSessionManager.reset()
       CompletionMapper.reset()
       bfactory.BFactoryMapInitializer.makeMap()
-      if (EvalConfigWrapper.isOmniRequired && !AMPKey.isHealthy) throw new Exception("Unable to connect to OmniCore")
+      if (!AMPKey.isHealthy) println("OmniCore is unavailable")
       @transient
       val system: ActorSystem = ActorSystem("evaluator-system")
       @transient
