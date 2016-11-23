@@ -50,6 +50,12 @@ object Containable {
               node.address.getHostString + ":" + node.address.getPort.toString :: accum
             }
             .mkString(","),
+        "DSL_COMM_LINK_CLIENT_HOSTS_STAGE_TWO" ->
+          n.dslCommLinkClientsStageTwo
+            .foldLeft(List.empty[String]) { (accum: List[String], node: Node) =>
+              node.address.getHostString + ":" + node.address.getPort.toString :: accum
+                                          }
+            .mkString(","),
         "DSL_EVALUATOR_HOST" ->
           n.dslEvaluator.address.getHostString,
         "DSL_EVALUATOR_PORT" ->

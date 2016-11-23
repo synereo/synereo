@@ -9,5 +9,6 @@ object DSLBoot {
     if (makeMap) {
       BFactoryMapInitializer.makeMap()
     }
+    ConnectionManager.sendStartEngineRequest()
   }
 }

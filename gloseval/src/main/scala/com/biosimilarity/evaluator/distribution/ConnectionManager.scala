@@ -14,18 +14,18 @@ object ConnectionManager {
 
   type Rsrc = mTT.Resource
 
-  val agentManager = agentMgr()
+  val agentManager: AgentManager = agentMgr()
 
   def sendStartEngineRequest(erql: CnxnCtxtLabel[String, String, String],
                              erspl: CnxnCtxtLabel[String, String, String],
-                             onPut: Option[mTT.Resource] => Unit) = {
+                             onReceive: Option[mTT.Resource] => Unit): Unit = {
     reset {
-      node().publish(erql, StartEngineRequest("eval.conf"))
+      node().publish(erql, StartEngineRequest("stage-two.conf"))
     }
     reset {
       try {
         node().subscribe(erspl).foreach { (optRsrc: Option[mTT.Resource]) =>
-          onPut(optRsrc)
+          onReceive(optRsrc)
         }
       } catch {
         case e: Throwable =>
@@ -37,10 +37,9 @@ object ConnectionManager {
 
   def sendStartEngineRequest(): Unit = {
     val (erql, erspl) = agentManager.makePolarizedPair()
-    def handler(optRsrc: Option[mTT.Resource]): Unit =
-      optRsrc.foreach { (rsrc: mTT.Resource) =>
-        BasicLogService.tweet(s"Hello from the NEUER REALITY: $rsrc")
-      }
+    def handler(optRsrc: Option[mTT.Resource]): Unit = optRsrc.foreach { (rsrc: mTT.Resource) =>
+      BasicLogService.tweet(s"Hello from the NEUER REALITY: $rsrc")
+    }
     sendStartEngineRequest(erql, erspl, handler)
   }
 }

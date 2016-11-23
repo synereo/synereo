@@ -16,6 +16,7 @@ trait Network {
     val address: InetSocketAddress
     val dslCommLinkServer: Node
     val dslCommLinkClients: List[Node]
+    val dslCommLinkClientsStageTwo: List[Node]
     val dslEvaluator: Node
     val dslEvaluatorPreferredSupplier: Node
     val bFactoryCommLinkServer: Node
@@ -32,6 +33,7 @@ trait Network {
                          val address: InetSocketAddress,
                          _dslCommLinkServer: => Node,
                          _dslCommLinkClients: => List[Node],
+                         _dslCommLinkClientsStageTwo: => List[Node],
                          _dslEvaluator: => Node,
                          _dslEvaluatorPreferredSupplier: => Node,
                          _bFactoryCommLinkServer: => Node,
@@ -49,6 +51,7 @@ trait Network {
 
     lazy val dslCommLinkServer             = _dslCommLinkServer
     lazy val dslCommLinkClients            = _dslCommLinkClients
+    lazy val dslCommLinkClientsStageTwo    = _dslCommLinkClientsStageTwo
     lazy val dslEvaluator                  = _dslEvaluator
     lazy val dslEvaluatorPreferredSupplier = _dslEvaluatorPreferredSupplier
     lazy val bFactoryCommLinkServer        = _bFactoryCommLinkServer
@@ -62,6 +65,7 @@ trait Network {
               address: InetSocketAddress,
               dslCommLinkServer: => Node,
               dslCommLinkClients: => List[Node],
+              dslCommLinkClientsStageTwo: => List[Node],
               dslEvaluator: => Node,
               dslEvaluatorPreferredSupplier: => Node,
               bFactoryCommLinkServer: => Node,
@@ -80,6 +84,7 @@ trait Network {
                      address,
                      dslCommLinkServer,
                      dslCommLinkClients,
+                     dslCommLinkClientsStageTwo,
                      dslEvaluator,
                      dslEvaluatorPreferredSupplier,
                      bFactoryCommLinkServer,
@@ -100,6 +105,7 @@ trait Network {
                            val address: InetSocketAddress,
                            _dslCommLinkServer: => Node,
                            _dslCommLinkClients: => List[Node],
+                           _dslCommLinkClientsStageTwo: => List[Node],
                            _dslEvaluator: => Node,
                            _dslEvaluatorPreferredSupplier: => Node,
                            _bFactoryCommLinkServer: => Node,
@@ -113,6 +119,7 @@ trait Network {
 
     lazy val dslCommLinkServer             = _dslCommLinkServer
     lazy val dslCommLinkClients            = _dslCommLinkClients
+    lazy val dslCommLinkClientsStageTwo    = _dslCommLinkClientsStageTwo
     lazy val dslEvaluator                  = _dslEvaluator
     lazy val dslEvaluatorPreferredSupplier = _dslEvaluatorPreferredSupplier
     lazy val bFactoryCommLinkServer        = _bFactoryCommLinkServer
@@ -126,6 +133,7 @@ trait Network {
               address: InetSocketAddress,
               dslCommLinkServer: => Node,
               dslCommLinkClients: => List[Node],
+              dslCommLinkClientsStageTwo: => List[Node],
               dslEvaluator: => Node,
               dslEvaluatorPreferredSupplier: => Node,
               bFactoryCommLinkServer: => Node,
@@ -140,6 +148,7 @@ trait Network {
                        address,
                        dslCommLinkServer,
                        dslCommLinkClients,
+                       dslCommLinkClientsStageTwo,
                        dslEvaluator,
                        dslEvaluatorPreferredSupplier,
                        bFactoryCommLinkServer,

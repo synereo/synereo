@@ -47,6 +47,7 @@ class SimpleColocatedTest extends ApiTests(Uri("https://localhost:9876/api"), tr
                                               address = new InetSocketAddress("10.100.101.10", 6672),
                                               dslCommLinkServer = colocatedNode,
                                               dslCommLinkClients = List(colocatedNode),
+                                              dslCommLinkClientsStageTwo = List(colocatedNode),
                                               dslEvaluator = colocatedNode,
                                               dslEvaluatorPreferredSupplier = colocatedNode,
                                               bFactoryCommLinkServer = colocatedNode,
