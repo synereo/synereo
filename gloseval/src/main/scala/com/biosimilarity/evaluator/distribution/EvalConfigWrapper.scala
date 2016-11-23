@@ -2,6 +2,8 @@ package com.biosimilarity.evaluator.distribution
 
 import java.net.URI
 
+import com.typesafe.config.ConfigFactory
+
 import scala.collection.JavaConversions._
 import scala.util.Try
 
@@ -17,7 +19,7 @@ object EvalConfigWrapper extends EvalConfig with Serializable {
 
   def readList(param: String): List[String] = evalConfig().getStringList(param).toList
 
-  def isOmniRequired(): Boolean = Try(readString("OmniRPCURI")).isSuccess
+  def isOmniRequired: Boolean = Try(evalConfig().getBoolean("isOmniRequired")).getOrElse(false)
 
   def serverPort = readIntOrElse("serverPort", 80)
 
@@ -45,6 +47,11 @@ object EvalConfigWrapper extends EvalConfig with Serializable {
   def password = nodeAdminPass
   def name     = nodeAdminName
   def jsonBlob = s"""{"name":"$name","imgSrc":"${QueenBeeImage.imgBase64}"}"""
+
+  def isTestMode = Try(ConfigFactory.load.getString("run.mode")) toOption match {
+    case Some("test") => true
+    case _ => false
+  }
 }
 
 object QueenBeeImage {

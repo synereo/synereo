@@ -9,6 +9,7 @@ import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.spray.client.ApiClient
 import com.biosimilarity.evaluator.spray.client.ClientSSLConfiguration._
 import com.biosimilarity.evaluator.util._
+import com.synereo.wallet.models.AMPKey
 import org.json4s.JsonAST.{JObject, JValue}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -120,7 +121,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           isr        <- openAdminSession(hc, uri, "admin@localhost", "a")
           _          <- makeQueryOnSelf(hc, uri, isr.sessionURI, "each([MESSAGEPOSTLABEL])")
           sessionUri <- spawnSession(hc, uri, isr.sessionURI)
-          jArray     <- sessionPing(hc, uri, sessionUri)
+          jArray     <- pingUntilPong(hc, uri, sessionUri)
           _          <- hc.ask(Http.CloseAll)
         } yield jArray).recover {
           case e: Throwable =>
@@ -326,6 +327,63 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
       }
     }
 
+    "return balance summary for user" in {
+
+      val eventualJArray: Future[(JArray)] =
+        for {
+          uri       <- Future(apiUri)
+          hc        <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          adminIsr  <- openAdminSession(hc, uri, "admin@localhost", "a")
+          status    <- makeBalanceRequest(hc, uri, adminIsr.sessionURI).map(_.status.intValue)
+          jArray    <- if(status == 403) Future(JArray(List()))
+                       else pingUntilTheType(hc, uri, adminIsr.sessionURI, "omniBalanceResponse")
+          _         <- hc.ask(Http.CloseAll)
+        } yield jArray
+
+      whenReady(eventualJArray) { (jArray: JArray) =>
+        if(AMPKey.isHealthy) {
+          val rsp = jArray.arr.head.asInstanceOf[JObject]
+          val msgType = (rsp \ "msgType").extract[String]
+          val content = (rsp \ "content").extract[OmniBalanceResponse]
+
+          msgType shouldBe "omniBalanceResponse"
+          content.amp.toDouble shouldEqual 0D
+        } else {
+          jArray.arr.isEmpty shouldBe true
+        }
+      }
+    }
+
+    "transfer AMPs, check the transaction's confirmation and then return the updated balance" in {
+      val eventualJArray: Future[(JArray)] =
+        for {
+          uri      <- Future(apiUri)
+          hc       <- eventualHostConnector(system, uri.effectivePort, sslEngineProvider)
+          adminIsr <- openAdminSession(hc, uri, "admin@localhost", "a")
+          alice    <- createSRPUser(hc, uri, "alice@testing.com", "alice", "a")
+          isrA     <- {
+                        println(s"User $alice created")
+                        openSRPSession(hc, uri, "alice@testing.com", "a")
+                      }
+          status   <- makeSendAmpsRequest(hc, uri, adminIsr.sessionURI, isrA.sessionURI, "10").map(_.status.intValue)
+          jArray   <- if(status == 403) Future(JArray(List()))
+                      else  pingUntilTheType(hc, uri, adminIsr.sessionURI, "omniBalanceResponse")
+          _        <- hc.ask(Http.CloseAll)
+        } yield jArray
+
+      whenReady(eventualJArray) { (jArray: JArray) =>
+        if(AMPKey.isHealthy) {
+          val rsp = jArray.arr.head.asInstanceOf[JObject]
+          val msgType = (rsp \ "msgType").extract[String]
+          val content = (rsp \ "content").extract[OmniBalanceResponse]
+
+          msgType shouldBe "omniBalanceResponse"
+        } else {
+          jArray.arr.isEmpty shouldBe true
+        }
+      }
+    }
+
     /*
      * Query Test Machinery
      *
@@ -463,7 +521,7 @@ abstract class ApiTests(val apiUri: Uri, sslEngineProvider: ClientSSLEngineProvi
           _        <- makeQueryOnSelf(hc, uri, ssn, "each([MESSAGEPOSTLABEL])")
           _        <- makeQueryOnSelf(hc, uri, ssn, "any([MESSAGEPOSTLABEL])")
           _        <- makeQueryOnSelf(hc, uri, ssn, "all([MESSAGEPOSTLABEL])")
-          jArray   <- sessionPing(hc, uri, ssn)
+          jArray   <- pingUntilPong(hc, uri, ssn)
           _        <- hc.ask(Http.CloseAll)
         } yield jArray).recover {
           case e: Throwable =>
@@ -555,8 +613,7 @@ class ApiSpec extends ApiTests(Uri("https://localhost:9876/api"), clientSSLEngin
   override def beforeEach(): Unit = {
     resetMongo()
     serverInstance = Some(Server().start())
-    Thread.sleep(10000L)
-    logger.info("finished waiting")
+    Thread.sleep(15000L)
   }
 
   override def afterEach(): Unit = {

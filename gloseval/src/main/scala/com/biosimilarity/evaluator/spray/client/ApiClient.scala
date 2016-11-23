@@ -115,7 +115,7 @@ trait ApiClient extends CapUtilities {
       implicit ec: ExecutionContext): Future[InitializeSessionResponse] =
     Future {
       extractResponseContentFromHttpResponse(response) match {
-        case isr @ InitializeSessionResponse(_, _, _, _, _, _, _, m2) if srpClient.verifyServerEvidenceMessage(fromHex(m2)) =>
+        case isr @ InitializeSessionResponse(_, _, _, _, _, _, _, _, m2) if srpClient.verifyServerEvidenceMessage(fromHex(m2)) =>
           isr
         case InitializeSessionError(reason) =>
           throw new Exception(s"An InitializeSessionStep2Request for $email returned an error: $reason")
@@ -245,9 +245,22 @@ trait ApiClient extends CapUtilities {
       parseHttpResponseEntity(response).extract[JArray]
     }
 
-  class Pingerator(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout) extends Iterator[JArray] {
+  def makeBalanceRequest(hc: ActorRef, uri: Uri, sessionUri: String)(
+    implicit ec: ExecutionContext, timeout: Timeout): Future[HttpResponse] = {
+    val req = OmniBalanceRequest(sessionUri)
+    httpPost(hc, uri, req)
+  }
 
-    private def isPong(jValue: JValue): Boolean = (jValue \ "msgType").extract[String] == "sessionPong"
+  def makeSendAmpsRequest(hc: ActorRef, uri: Uri, sessionUri: String, targetUri: String, amount: String)(
+    implicit ec: ExecutionContext, timeout: Timeout): Future[HttpResponse] = {
+    val target = capFromSession(targetUri)
+    val req = SendAmpsRequest(sessionUri, target, amount)
+    httpPost(hc, uri, req)
+  }
+
+  class Pingerator(hc: ActorRef, uri: Uri, sessionUri: String, msgType: String = "sessionPong")(implicit ec: ExecutionContext, timeout: Timeout) extends Iterator[JArray] {
+
+    private def isPong(jValue: JValue): Boolean = (jValue \ "msgType").extract[String] == msgType
 
     private var ponged = false
 
@@ -263,6 +276,13 @@ trait ApiClient extends CapUtilities {
   def pingUntilPong(hc: ActorRef, uri: Uri, sessionUri: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[JArray] =
     Future {
       new Pingerator(hc, uri, sessionUri).fold(JArray(Nil)) { (left: JArray, right: JArray) =>
+        JArray(left.arr ++ right.arr)
+      }
+    }
+
+  def pingUntilTheType(hc: ActorRef, uri: Uri, sessionUri: String, msgType: String)(implicit ec: ExecutionContext, timeout: Timeout): Future[JArray] =
+    Future {
+      new Pingerator(hc, uri, sessionUri, msgType).fold(JArray(Nil)) { (left: JArray, right: JArray) =>
         JArray(left.arr ++ right.arr)
       }
     }

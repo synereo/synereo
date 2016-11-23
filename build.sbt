@@ -59,6 +59,8 @@ lazy val commonSettings = Seq(
   },
   resolvers ++= Seq(
     Resolver.bintrayRepo("synereo", "maven"),
+    Resolver.bintrayRepo("omni", "maven"),
+    Resolver.bintrayRepo("msgilligan", "maven"),
     Resolver.sonatypeRepo("snapshots"),
     "BaseX" at "http://files.basex.org/maven/",
     "xqj"   at "http://xqj.net/maven/"),
@@ -132,7 +134,7 @@ lazy val agentService = (project in file("agent-service/AgentServices-Store"))
   .settings(agentServiceSettings: _*)
   .settings(commonSettings: _*)
   .settings(bnfcSettings: _*)
-  .dependsOn(specialk)
+  .dependsOn(specialk, wallet)
 
 lazy val glosevalDeps = Seq(
   "biz.source_code"             % "base64coder"              % base64coderVersion,
@@ -283,8 +285,26 @@ lazy val worlock = (project in file("worlock"))
   .settings(commonSettings: _*)
   .dependsOn(gloseval % "test->test;compile->compile")
 
+lazy val walletDeps = Seq(
+  "com.typesafe"     % "config"         % configVersion,
+  "org.json4s"      %% "json4s-jackson" % json4sVersion,
+  "org.json4s"      %% "json4s-native"  % json4sVersion,
+  "org.bitcoinj"     % "bitcoinj-core"  % "0.14.3" exclude("org.slf4j", "slf4j-api"),
+  "foundation.omni"  % "omnij-core"     % "0.4.0"  exclude("org.slf4j", "slf4j-api") exclude("org.slf4j", "slf4j-jdk14"),
+  "foundation.omni"  % "omnij-rpc"      % "0.4.0"  exclude("org.slf4j", "slf4j-api") exclude("org.slf4j", "slf4j-jdk14"),
+  "org.scalatest"   %% "scalatest"      % scalatestVersion % "test")
+
+lazy val walletSettings = Seq(
+  name := "wallet",
+  organization := "com.synereo",
+  libraryDependencies ++= walletDeps)
+
+lazy val wallet = (project in file("wallet"))
+  .settings(walletSettings: _*)
+  .settings(commonSettings: _*)
+
 lazy val root = (project in file("."))
-  .aggregate(specialk, agentService, gloseval, worlock)
-  .dependsOn(specialk, agentService, gloseval, worlock)
+  .aggregate(specialk, agentService, gloseval, worlock, wallet)
+  .dependsOn(specialk, agentService, gloseval, worlock, wallet)
   .settings(commonSettings: _*)
   .enablePlugins(GitVersioning)

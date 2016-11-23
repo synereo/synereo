@@ -15,7 +15,6 @@ import java.util.UUID
 import com.biosimilarity.evaluator.api._
 import com.biosimilarity.evaluator.distribution.EvalConfigWrapper
 import com.biosimilarity.evaluator.importer.models._
-import com.biosimilarity.evaluator.omni.OmniClient
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 import com.biosimilarity.evaluator.spray.srp.SRPClient
 import com.biosimilarity.evaluator.util._
@@ -101,6 +100,7 @@ class Importer(host: URI) {
                         case "establishConnectionResponse" => ()
                         case "evalComplete" => ()
                         case "evalSubscribeResponse" => ()
+                        case "omniBalanceResponse" => ()
                         case _ =>
                           println("WARNING - handler not provided for server sent message type : " + typ)
                       }
@@ -207,7 +207,7 @@ class Importer(host: URI) {
           case ApiError(reason) =>
             println(s"initialize session, step 2, failed, reason : $reason")
             None
-          case InitializeSessionResponse(sessionURI, _, _, _, _, _, _, m2) =>
+          case InitializeSessionResponse(sessionURI, _, _, _, _, _, _, _, m2) =>
             if(srpClient.verifyServerEvidenceMessage(fromHex(m2))) Some(sessionURI)
             else throw new Exception("Authentication failed on client")
           case _ => throw new Exception("Unspecified response")

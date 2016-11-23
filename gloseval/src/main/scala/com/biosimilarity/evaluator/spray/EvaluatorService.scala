@@ -6,6 +6,7 @@ import akka.actor._
 import com.biosimilarity.evaluator.distribution._
 import com.biosimilarity.evaluator.spray.directives.{CORSSupport, HttpsDirectives}
 import com.biosimilarity.lift.lib._
+import com.synereo.wallet.models.AMPKey
 import org.json4s.JsonDSL._
 import org.json4s._
 import org.json4s.native.JsonMethods._
@@ -83,11 +84,18 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
     // Verifier protocol
     ("initiateClaim", initiateClaim),
     // omni
+    ("omniBalanceRequest", omniBalanceRequest),
+    ("sendAmpsRequest", sendAmpsRequest),
+    ("receiveBTCRequest", receiveBTCRequest),
+    ("receiveAMPRequest", receiveAMPRequest),
     ("omniGetBalance", omniGetBalance),
     ("omniTransfer", omniTransfer),
     ("getAmpWalletAddress", omniGetAmpWalletAddress),
     ("setAmpWalletAddress", omniSetAmpWalletAddress)
   )
+
+  @transient
+  val omniMessages: Seq[String] = Seq("omniBalanceRequest", "sendAmpsRequest", "receiveBTCRequest", "receiveAMPRequest")
 
   def handleAsyncPosts(ctx: RequestContext, msgType: String, content: JObject): Unit =
     (content \ "sessionURI").extractOpt[String] match {
@@ -101,16 +109,22 @@ trait EvaluatorService extends HttpService with HttpsDirectives with CORSSupport
             ctx.complete(StatusCodes.Forbidden, "Invalid sessionURI parameter")
           case Some(cometActor) =>
             msgType match {
-              case "sessionPing"           => cometActor ! SessionActor.SessionPing(ctx)
+              case "sessionPing"           =>
+                checkUserTransactions(sessionURI)
+                cometActor ! SessionActor.SessionPing(ctx)
               case "closeSessionRequest"   => cometActor ! SessionActor.CloseSession(Some(ctx))
               case "startSessionRecording" => cometActor ! SessionActor.StartCamera(ctx)
               case "stopSessionRecording"  => cometActor ! SessionActor.StopCamera(ctx)
               case _ =>
                 asyncMethods.get(msgType) match {
                   case Some(fn) =>
-                    cometActor ! SessionActor.ItemReceived(msgType, content)
-                    ctx.complete(StatusCodes.OK)
-                    fn(content)
+                    if(omniMessages.contains(msgType) && !AMPKey.isHealthy) {
+                      ctx.complete(StatusCodes.Forbidden)
+                    } else {
+                      cometActor ! SessionActor.ItemReceived(msgType, content)
+                      ctx.complete(StatusCodes.OK)
+                      fn(content)
+                    }
                   case _ =>
                     ctx.complete(HttpResponse(500, "Unknown message type: " + msgType + "\n"))
                 }

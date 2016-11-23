@@ -6,7 +6,7 @@ Vagrant.configure("2") do |config|
 
   # create mgmt node
   config.vm.define :synereo do |config|
-      config.vm.box = "ubuntu/precise64"
+      config.vm.box = "ubuntu/trusty64"
       config.vm.hostname = "synereo"
       config.vm.network :private_network, ip: "10.0.15.10"
       config.vm.provider "virtualbox" do |vb|
