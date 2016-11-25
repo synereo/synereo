@@ -5,9 +5,11 @@ import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
 import com.biosimilarity.evaluator.api._
+import com.biosimilarity.evaluator.distribution.PortableAgentCnxn
 import com.biosimilarity.evaluator.spray.CapUtilities
 import com.biosimilarity.evaluator.spray.srp.ConversionUtils._
 import com.biosimilarity.evaluator.spray.srp.SRPClient
+import com.protegra_ati.agentservices.msgs.agent.introduction.beginIntroductionRequest
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization._
 import org.json4s.{BuildInfo => _, _}
@@ -226,6 +228,13 @@ trait ApiClient extends CapUtilities {
     httpPost(hc, uri, GetConnectionProfiles(sessionId)).map { (response: HttpResponse) =>
       response.entity.asString
     }
+
+  def beginIntroduction(hc: ActorRef, uri: Uri, sessionId: String, acnxn: Connection, bcnxn: Connection)(implicit ec: ExecutionContext, timeout: Timeout): Future[String] = {
+    val req = BeginIntroductionRequest(sessionId, "alias", acnxn, bcnxn, "hey A", "hey B")
+    httpPost(hc, uri, req).map { (response: HttpResponse) =>
+      response.entity.asString
+    }
+  }
 
   def extractConnections(jArray: JArray)(implicit ec: ExecutionContext): Future[List[Connection]] =
     Future {

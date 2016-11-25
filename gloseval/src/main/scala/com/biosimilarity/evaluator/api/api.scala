@@ -37,6 +37,9 @@ case class InitializeSessionStep2Request(agentURI: String)                      
 case class CloseSessionRequest(sessionURI: String)                                                   extends RequestContent
 case class AddAliasLabelsRequest(sessionURI: String, alias: String, labels: List[String])            extends RequestContent
 case class EstablishConnectionRequest(sessionURI: String, aURI: String, bURI: String, label: String) extends RequestContent
+case class BeginIntroductionRequest(sessionURI: String, alias: String,
+                                    aConnection: Connection, bConnection: Connection,
+                                    aMessage: String, bMessage: String)                              extends RequestContent
 case class EvalSubscribeRequest(sessionURI: String, expression: EvalSubscribeExpression)             extends RequestContent
 case class ResetDatabaseRequest(sessionURI: String)                                                  extends RequestContent
 case class GetAmpWalletAddress(sessionURI: String)                                                   extends RequestContent
