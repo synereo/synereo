@@ -60,10 +60,18 @@ object Containable {
           n.dslEvaluator.address.getHostString,
         "DSL_EVALUATOR_PORT" ->
           n.dslEvaluator.address.getPort.toString,
+        "DSL_EVALUATOR_HOST_STAGE_TWO" ->
+          n.dslEvaluatorStageTwo.address.getHostString,
+        "DSL_EVALUATOR_PORT_STAGE_TWO" ->
+          n.dslEvaluatorStageTwo.address.getPort.toString,
         "DSL_EVALUATOR_PREFERRED_SUPPLIER_HOST" ->
           n.dslEvaluatorPreferredSupplier.address.getHostString,
         "DSL_EVALUATOR_PREFERRED_SUPPLIER_PORT" ->
           n.dslEvaluatorPreferredSupplier.address.getPort.toString,
+        "DSL_EVALUATOR_PREFERRED_SUPPLIER_HOST_STAGE_TWO" ->
+          n.dslEvaluatorPreferredSupplierStageTwo.address.getHostString,
+        "DSL_EVALUATOR_PREFERRED_SUPPLIER_PORT_STAGE_TWO" ->
+          n.dslEvaluatorPreferredSupplierStageTwo.address.getPort.toString,
         "BFACTORY_COMM_LINK_SERVER_HOST" ->
           n.bFactoryCommLinkServer.address.getHostString,
         "BFACTORY_COMM_LINK_SERVER_PORT" ->

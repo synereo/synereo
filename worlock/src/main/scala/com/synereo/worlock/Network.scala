@@ -18,7 +18,9 @@ trait Network {
     val dslCommLinkClients: List[Node]
     val dslCommLinkClientsStageTwo: List[Node]
     val dslEvaluator: Node
+    val dslEvaluatorStageTwo: Node
     val dslEvaluatorPreferredSupplier: Node
+    val dslEvaluatorPreferredSupplierStageTwo: Node
     val bFactoryCommLinkServer: Node
     val bFactoryCommLinkClient: Node
     val bFactoryEvaluator: Node
@@ -35,7 +37,9 @@ trait Network {
                          _dslCommLinkClients: => List[Node],
                          _dslCommLinkClientsStageTwo: => List[Node],
                          _dslEvaluator: => Node,
+                         _dslEvaluatorStageTwo: => Node,
                          _dslEvaluatorPreferredSupplier: => Node,
+                         _dslEvaluatorPreferredSupplierStageTwo: => Node,
                          _bFactoryCommLinkServer: => Node,
                          _bFactoryCommLinkClient: => Node,
                          _bFactoryEvaluator: => Node,
@@ -49,14 +53,16 @@ trait Network {
                          val suspendForDebugger: Boolean)
       extends Node {
 
-    lazy val dslCommLinkServer             = _dslCommLinkServer
-    lazy val dslCommLinkClients            = _dslCommLinkClients
-    lazy val dslCommLinkClientsStageTwo    = _dslCommLinkClientsStageTwo
-    lazy val dslEvaluator                  = _dslEvaluator
-    lazy val dslEvaluatorPreferredSupplier = _dslEvaluatorPreferredSupplier
-    lazy val bFactoryCommLinkServer        = _bFactoryCommLinkServer
-    lazy val bFactoryCommLinkClient        = _bFactoryCommLinkClient
-    lazy val bFactoryEvaluator             = _bFactoryEvaluator
+    lazy val dslCommLinkServer                     = _dslCommLinkServer
+    lazy val dslCommLinkClients                    = _dslCommLinkClients
+    lazy val dslCommLinkClientsStageTwo            = _dslCommLinkClientsStageTwo
+    lazy val dslEvaluator                          = _dslEvaluator
+    lazy val dslEvaluatorStageTwo                  = _dslEvaluatorStageTwo
+    lazy val dslEvaluatorPreferredSupplier         = _dslEvaluatorPreferredSupplier
+    lazy val dslEvaluatorPreferredSupplierStageTwo = _dslEvaluatorPreferredSupplierStageTwo
+    lazy val bFactoryCommLinkServer                = _bFactoryCommLinkServer
+    lazy val bFactoryCommLinkClient                = _bFactoryCommLinkClient
+    lazy val bFactoryEvaluator                     = _bFactoryEvaluator
   }
 
   object HeadedNode {
@@ -67,7 +73,9 @@ trait Network {
               dslCommLinkClients: => List[Node],
               dslCommLinkClientsStageTwo: => List[Node],
               dslEvaluator: => Node,
+              dslEvaluatorStageTwo: => Node,
               dslEvaluatorPreferredSupplier: => Node,
+              dslEvaluatorPreferredSupplierStageTwo: => Node,
               bFactoryCommLinkServer: => Node,
               bFactoryCommLinkClient: => Node,
               bFactoryEvaluator: => Node,
@@ -86,7 +94,9 @@ trait Network {
                      dslCommLinkClients,
                      dslCommLinkClientsStageTwo,
                      dslEvaluator,
+                     dslEvaluatorStageTwo,
                      dslEvaluatorPreferredSupplier,
+                     dslEvaluatorPreferredSupplierStageTwo,
                      bFactoryCommLinkServer,
                      bFactoryCommLinkClient,
                      bFactoryEvaluator,
@@ -107,7 +117,9 @@ trait Network {
                            _dslCommLinkClients: => List[Node],
                            _dslCommLinkClientsStageTwo: => List[Node],
                            _dslEvaluator: => Node,
+                           _dslEvaluatorStageTwo: => Node,
                            _dslEvaluatorPreferredSupplier: => Node,
+                           _dslEvaluatorPreferredSupplierStageTwo: => Node,
                            _bFactoryCommLinkServer: => Node,
                            _bFactoryCommLinkClient: => Node,
                            _bFactoryEvaluator: => Node,
@@ -117,14 +129,16 @@ trait Network {
                            val suspendForDebugger: Boolean)
       extends Node {
 
-    lazy val dslCommLinkServer             = _dslCommLinkServer
-    lazy val dslCommLinkClients            = _dslCommLinkClients
-    lazy val dslCommLinkClientsStageTwo    = _dslCommLinkClientsStageTwo
-    lazy val dslEvaluator                  = _dslEvaluator
-    lazy val dslEvaluatorPreferredSupplier = _dslEvaluatorPreferredSupplier
-    lazy val bFactoryCommLinkServer        = _bFactoryCommLinkServer
-    lazy val bFactoryCommLinkClient        = _bFactoryCommLinkClient
-    lazy val bFactoryEvaluator             = _bFactoryEvaluator
+    lazy val dslCommLinkServer                     = _dslCommLinkServer
+    lazy val dslCommLinkClients                    = _dslCommLinkClients
+    lazy val dslCommLinkClientsStageTwo            = _dslCommLinkClientsStageTwo
+    lazy val dslEvaluator                          = _dslEvaluator
+    lazy val dslEvaluatorStageTwo                  = _dslEvaluator
+    lazy val dslEvaluatorPreferredSupplier         = _dslEvaluatorPreferredSupplier
+    lazy val dslEvaluatorPreferredSupplierStageTwo = _dslEvaluatorPreferredSupplierStageTwo
+    lazy val bFactoryCommLinkServer                = _bFactoryCommLinkServer
+    lazy val bFactoryCommLinkClient                = _bFactoryCommLinkClient
+    lazy val bFactoryEvaluator                     = _bFactoryEvaluator
   }
 
   object HeadlessNode {
@@ -135,7 +149,9 @@ trait Network {
               dslCommLinkClients: => List[Node],
               dslCommLinkClientsStageTwo: => List[Node],
               dslEvaluator: => Node,
+              dslEvaluatorStageTwo: => Node,
               dslEvaluatorPreferredSupplier: => Node,
+              dslEvaluatorPreferredSupplierStageTwo: => Node,
               bFactoryCommLinkServer: => Node,
               bFactoryCommLinkClient: => Node,
               bFactoryEvaluator: => Node,
@@ -150,7 +166,9 @@ trait Network {
                        dslCommLinkClients,
                        dslCommLinkClientsStageTwo,
                        dslEvaluator,
+                       dslEvaluatorStageTwo,
                        dslEvaluatorPreferredSupplier,
+                       dslEvaluatorPreferredSupplierStageTwo,
                        bFactoryCommLinkServer,
                        bFactoryCommLinkClient,
                        bFactoryEvaluator,
