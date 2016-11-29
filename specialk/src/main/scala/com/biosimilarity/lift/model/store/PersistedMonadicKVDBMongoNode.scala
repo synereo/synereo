@@ -313,15 +313,15 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
 	  yield { pd.asStoreKRecord( key, value ) }
 	}
 
-        def isIndirectionKey(functor: Namespace, flatKeyCandidate: Tag): Option[Boolean] = {
-          for(pd <- persistenceManifest)
-          yield pd.isIndirectionKey(functor, flatKeyCandidate)
-        }
-        
-        def isIndirection(rcrd: CnxnCtxtBranch[Namespace, Var, Tag]): Option[Boolean] = {
-          for(pd <- persistenceManifest)
-          yield pd.isIndirection(rcrd)
-        }
+  def isIndirectionKey(functor: Namespace, flatKeyCandidate: Tag): Option[Boolean] = {
+    for(pd <- persistenceManifest)
+    yield pd.isIndirectionKey(functor, flatKeyCandidate)
+  }
+
+  def isIndirection(rcrd: CnxnCtxtBranch[Namespace, Var, Tag]): Option[Boolean] = {
+    for(pd <- persistenceManifest)
+    yield pd.isIndirection(rcrd)
+  }
 
         def asIndirection(
 	  key : mTT.GetRequest, // must have the pattern to determine bindings
@@ -1135,139 +1135,139 @@ extends MonadicKVDBNodeScope[Namespace,Var,Tag,Value] with Serializable {
           pairs.getOrElse( List[( DBObject, emT.PlaceInstance )]( ) )
         }
 
-  // BLIND FAITH
-  def assertComposes(indirect: CnxnCtxtLabel[Namespace, Var, Tag] with Factual,
-										 direct: CnxnCtxtLabel[Namespace, Var, Tag] with Factual): Boolean = throw new Exception("Can't find my way home")
+        // BLIND FAITH
+        def assertComposes(indirect: CnxnCtxtLabel[Namespace, Var, Tag] with Factual,
+                           direct: CnxnCtxtLabel[Namespace, Var, Tag] with Factual): Boolean = throw new Exception("Can't find my way home")
 
-  def putInStore(persist : Option[PersistenceManifest],
-								 channels : Map[mTT.GetRequest,mTT.Resource],
-								 ptn : mTT.GetRequest,
-								 wtr : Option[mTT.GetRequest],
-								 rsrc : mTT.Resource,
-								 collName : Option[String],
-                 spawnDBCall : Boolean,
-								 useUpsert : Boolean = true)( implicit syncTable : Option[( UUID, HashMap[UUID,Int] )] ) : Unit = {
-		BasicLogService.tweet(s"""PersistedMonadicKVDBMongoNode :
-																										|method : putInStore
-																										|this : $this
-																										|ptn : $ptn
-																										|rsrc : $rsrc
-																										|collName : $collName""".stripMargin)
-		BasicLogService.tweet("putInStore")
-	  persist match {
-	    case None => {
-	      BasicLogService.tweet("putInStore, None")
-	      channels( wtr.getOrElse( ptn ) ) = rsrc	  
-	    }
-	    case Some(pd) => {
-	      BasicLogService.tweet("putInStore, Some")
-				val dbAccessExpr = () =>
-					for {
-						indrctRcrd <- asStoreIndirection(ptn)
-						rcrd <- asStoreRecord(indrctRcrd, rsrc)
-						sus <- collName
-					} {
-						assertComposes(indrctRcrd, rcrd) match {
-							case true =>
-								BasicLogService.tweet((s"storing indirectionRecord to db :  pair : $indrctRcrd in coll : $sus"))
-								store(sus)(indrctRcrd)(nameSpaceToString, varToString, tagToString, useUpsert)
-								BasicLogService.tweet((s"storing flatKeyRecord to db :  pair : $rcrd in coll : $sus"))
-								store(sus)(rcrd)(nameSpaceToString, varToString, tagToString, useUpsert)
-							case false =>
-								throw new Exception(s"""Records don't compose:
-																			 |indirect record: $indrctRcrd
-																			 |direct record: $rcrd""".stripMargin)
-						}
-					}
-	      BasicLogService.tweet("accessing db : ")
-	      // remove this line to force to db on get
-	      channels(wtr.getOrElse(ptn)) = rsrc
-	      if (spawnDBCall) {
-	        BasicLogService.tweet("putInStore, spawning db call")
-					spawn { dbAccessExpr() }
-	      } else {
-	        BasicLogService.tweet("putInStore, calling dbAccessExpr directly")
-					dbAccessExpr()
-	      }
-	    }
-	  }
-	}
+        def putInStore(persist: Option[PersistenceManifest],
+                       channels: Map[mTT.GetRequest,mTT.Resource],
+                       ptn: mTT.GetRequest,
+                       wtr: Option[mTT.GetRequest],
+                       rsrc: mTT.Resource,
+                       collName: Option[String],
+                       spawnDBCall: Boolean,
+                       useUpsert: Boolean = true)(implicit syncTable: Option[(UUID, HashMap[UUID,Int])]): Unit = {
+					BasicLogService.tweet(s"""PersistedMonadicKVDBMongoNode :
+																	 |method : putInStore
+																	 |this : $this
+																	 |ptn : $ptn
+																	 |rsrc : $rsrc
+																	 |collName : $collName""".stripMargin)
+          BasicLogService.tweet("putInStore")
+          persist match {
+            case None => {
+              BasicLogService.tweet("putInStore, None")
+              channels( wtr.getOrElse( ptn ) ) = rsrc
+            }
+            case Some(pd) => {
+              BasicLogService.tweet("putInStore, Some")
+              val dbAccessExpr = () =>
+              for {
+                indrctRcrd <- asStoreIndirection(ptn)
+                rcrd <- asStoreRecord(indrctRcrd, rsrc)
+                sus <- collName
+              } {
+                assertComposes(indrctRcrd, rcrd) match {
+                  case true =>
+                    BasicLogService.tweet((s"storing indirectionRecord to db :  pair : $indrctRcrd in coll : $sus"))
+                    store(sus)(indrctRcrd)(nameSpaceToString, varToString, tagToString, useUpsert)
+                    BasicLogService.tweet((s"storing flatKeyRecord to db :  pair : $rcrd in coll : $sus"))
+                    store(sus)(rcrd)(nameSpaceToString, varToString, tagToString, useUpsert)
+                  case false =>
+										throw new Exception(s"""Records don't compose:
+																					 |indirect record: $indrctRcrd
+																					 |direct record: $rcrd""".stripMargin)
+                }
+              }
+              BasicLogService.tweet("accessing db : ")
+              // remove this line to force to db on get
+              channels(wtr.getOrElse(ptn)) = rsrc
+              if (spawnDBCall) {
+                BasicLogService.tweet("putInStore, spawning db call")
+                spawn { dbAccessExpr() }
+              } else {
+                BasicLogService.tweet("putInStore, calling dbAccessExpr directly")
+                dbAccessExpr()
+              }
+            }
+          }
+        }
 
-	// BUGBUG -- lgm : how can we refactor out commonality between
-	// this and the method, putInStore, above
-	def putKInStore(persist : Option[PersistenceManifest],
-									ptn : mTT.GetRequest,
-									rsrc : mTT.Resource,
-									collName : Option[String],
-									spawnDBCall : Boolean,
-									useUpsert : Boolean = true)(implicit syncTable : Option[(UUID, HashMap[UUID,Int])]): Unit = {
-		persist match {
-			case None => {
-				// Nothing to do
-				BasicLogService.tweet("warning : no store in which to put continuation " + rsrc)
-			}
-			case Some(pd) => {
-				BasicLogService.tweet("putKInStore accessing db : ")
-				val dbAccessExpr = () =>
-					for {
-						indrctRcrd <- asStoreKIndirection(ptn)
-						rcrd <- asStoreKRecord(indrctRcrd, rsrc)
-						sus <- collName
-					} {
-						assertComposes(indrctRcrd, rcrd) match {
-							case true =>
-								BasicLogService.tweet((s"storing indirectionRecord to db :  pair : $indrctRcrd in coll : $sus"))
-								store(sus)(indrctRcrd)(nameSpaceToString, varToString, tagToString, useUpsert)
-								BasicLogService.tweet(s"storing to db :  pair : $rcrd in coll : $sus")
-								store(sus)(rcrd)(nameSpaceToString, varToString, tagToString, useUpsert)
-								for ((sky, stbl) <- syncTable) {
-									stbl(sky) = stbl(sky) - 1
-								}
-							case false =>
-								throw new Exception(s"""Records don't compose:
-																			 |indirect record: $indrctRcrd
-																			 |direct record: $rcrd""".stripMargin)
-						}
-					}
-				if (spawnDBCall) {
-					spawn {
-						dbAccessExpr()
-					}
-				} else {
-					dbAccessExpr()
-				}
-			}
-		}
-	}
+        // BUGBUG -- lgm : how can we refactor out commonality between
+        // this and the method, putInStore, above
+        def putKInStore(persist : Option[PersistenceManifest],
+                        ptn : mTT.GetRequest,
+                        rsrc : mTT.Resource,
+                        collName : Option[String],
+                        spawnDBCall : Boolean,
+                        useUpsert : Boolean = true)(implicit syncTable : Option[(UUID, HashMap[UUID,Int])]): Unit = {
+          persist match {
+            case None => {
+              // Nothing to do
+              BasicLogService.tweet("warning : no store in which to put continuation " + rsrc)
+            }
+            case Some(pd) => {
+              BasicLogService.tweet("putKInStore accessing db : ")
+              val dbAccessExpr = () =>
+              for {
+                indrctRcrd <- asStoreKIndirection(ptn)
+                rcrd <- asStoreKRecord(indrctRcrd, rsrc)
+                sus <- collName
+              } {
+                assertComposes(indrctRcrd, rcrd) match {
+                  case true =>
+                    BasicLogService.tweet((s"storing indirectionRecord to db :  pair : $indrctRcrd in coll : $sus"))
+                    store(sus)(indrctRcrd)(nameSpaceToString, varToString, tagToString, useUpsert)
+                    BasicLogService.tweet(s"storing to db :  pair : $rcrd in coll : $sus")
+                    store(sus)(rcrd)(nameSpaceToString, varToString, tagToString, useUpsert)
+                    for ((sky, stbl) <- syncTable) {
+                      stbl(sky) = stbl(sky) - 1
+                    }
+                  case false =>
+                    throw new Exception(s"""Records don't compose:
+                                     |indirect record: $indrctRcrd
+                                     |direct record: $rcrd""".stripMargin)
+                }
+              }
+              if (spawnDBCall) {
+                spawn {
+                  dbAccessExpr()
+                }
+              } else {
+                dbAccessExpr()
+              }
+            }
+          }
+        }
 
-	def pullKRecords(
-	  persist : Option[PersistenceManifest],
-	  path : CnxnCtxtLabel[Namespace,Var,Tag],
-	  collName : Option[String]
-	) : Option[List[emT.PlaceInstance]] = {
-	  BasicLogService.tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
-	  BasicLogService.tweet( "pulling krecords" )
-	  BasicLogService.tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
-	  val xmlCollName =
-	    collName.getOrElse( storeUnitStr.getOrElse( bail( ) ) )
+        def pullKRecords(
+          persist : Option[PersistenceManifest],
+          path : CnxnCtxtLabel[Namespace,Var,Tag],
+          collName : Option[String]
+        ) : Option[List[emT.PlaceInstance]] = {
+          BasicLogService.tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
+          BasicLogService.tweet( "pulling krecords" )
+          BasicLogService.tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
+          val xmlCollName =
+            collName.getOrElse( storeUnitStr.getOrElse( bail( ) ) )
 
-	  for(
-	    pd <- persist;	    
-	    //kqry <- kquery( xmlCollName, path );
-	    if checkIfDBExists( xmlCollName, true )
-	  ) yield {
-	    //for( krslt <- executeWithResults( xmlCollName, kqry ) ) yield {
+          for(
+            pd <- persist;	    
+            //kqry <- kquery( xmlCollName, path );
+            if checkIfDBExists( xmlCollName, true )
+          ) yield {
+            //for( krslt <- executeWithResults( xmlCollName, kqry ) ) yield {
             val tPath = Right[mTT.GetRequest,mTT.GetRequest]( path )
-	    for(
+            for(
               ( krslt, ekrsrc ) <- executeWithResults( pd, xmlCollName, tPath )
             ) yield {  
               BasicLogService.tweet( ">>>>>>***>>>>>>***>>>>>>" )
-	      BasicLogService.tweet( "retrieved " + krslt.toString )
-	      BasicLogService.tweet( "<<<<<<***<<<<<<***<<<<<<" )
-	      val ekrsrc = pd.asResource( path, krslt )
-	      
-	      BasicLogService.tweet( ">>>>>>***>>>>>>***>>>>>>" )
-	      BasicLogService.tweet( "retrieved " + ekrsrc )
+              BasicLogService.tweet( "retrieved " + krslt.toString )
+              BasicLogService.tweet( "<<<<<<***<<<<<<***<<<<<<" )
+              val ekrsrc = pd.asResource( path, krslt )
+              
+              BasicLogService.tweet( ">>>>>>***>>>>>>***>>>>>>" )
+              BasicLogService.tweet( "retrieved " + ekrsrc )
 	      BasicLogService.tweet( "<<<<<<***<<<<<<***<<<<<<" )
 	      
 	      BasicLogService.tweet( "#############>>>>>>***>>>>>>***>>>>>>#############" )
