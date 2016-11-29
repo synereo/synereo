@@ -2266,11 +2266,11 @@ package diesel {
             }
             case seRq@ConcreteHL.StartEngineRequest( cfgFN ) => {
               BasicLogService.tweet(s"I DON'T EXIST WHEN YOU DON'T SEE ME: $seRq")
-              val e = new DieselEngineCtor.DieselEngine( Some( cfgFN ) )
+              val e = new DieselEngineCtor.DieselEngine(Some(cfgFN))
               val nodeId = UUID.randomUUID()
               val nodeKey = nodeId.toString
 
-              EvalNodeMapper += ( nodeKey -> DieselEngineCtor.dslEvaluatorAgent( ) )
+              EvalNodeMapper += ( nodeKey -> DieselEngineCtor.dslEvaluatorAgent(Some(cfgFN)))
               e.indirectStdLooper( nodeKey )
             }
           }
