@@ -36,7 +36,7 @@ object ConnectionManager {
   }
 
   def sendStartEngineRequest(): Unit = {
-    val (erql, erspl) = agentManager.makePolarizedPair()
+    val (erql, erspl) = agentManager.makePolarizedAdminPair()
     def handler(optRsrc: Option[mTT.Resource]): Unit = optRsrc.foreach { (rsrc: mTT.Resource) =>
       BasicLogService.tweet(s"Hello from the NEUER REALITY: $rsrc")
     }
