@@ -2259,10 +2259,16 @@ package diesel {
         for ( n <- EvalNodeMapper.get( node ) ) {
           expr match {
             case ctcRq@ConcreteHL.ConnectToClientRequest( uris ) => {
-              val _ = ptToMany(
+              val newNode : StdEvalChannel = ptToMany(
                 new URI( "agent", null, localHost, localPort, dataLocation, null, null ),
                 uris.toList
               )
+              val e = new DieselEngineCtor.DieselEngine( None )
+              val nodeId = UUID.randomUUID()
+              val nodeKey = nodeId.toString
+
+              EvalNodeMapper += ( nodeKey -> newNode )
+              e.indirectStdLooper( nodeKey )
             }
             case seRq@ConcreteHL.StartEngineRequest( cfgFN ) => {
               BasicLogService.tweet(s"I DON'T EXIST WHEN YOU DON'T SEE ME: $seRq")
