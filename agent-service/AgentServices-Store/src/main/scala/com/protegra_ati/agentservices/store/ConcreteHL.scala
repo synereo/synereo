@@ -125,22 +125,10 @@ object ConcreteHL extends Serializable {
   trait AdminResponse
 
   // Dynamic connection of clients
-  case class StartEngineRequest(
-    configFileName : String
-  ) extends HLExpr
-      with AdminRequest
-  case class StartEngineResponse(
-    configFileName : String
-  ) extends HLExpr
-      with AdminRequest
+  case class ConnectToClientRequest(configFileName: String,
+                                    localhost: URI,
+                                    uris: Seq[URI])
+    extends HLExpr with AdminRequest
 
-  case class ConnectToClientRequest(
-    uris : Seq[URI]
-  ) extends HLExpr
-      with AdminRequest
-
-  case class ConnectToClientResponse(
-    biCnxn : PortableAgentBiCnxn
-  ) extends HLExpr
-  with AdminResponse
+  case class ConnectToClientResponse(biCnxn : PortableAgentBiCnxn) extends HLExpr with AdminResponse
 }

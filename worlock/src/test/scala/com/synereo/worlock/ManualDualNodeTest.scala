@@ -35,7 +35,7 @@ class ManualDualNodeTest extends WordSpec with ApiClient with Matchers with Scal
   val client: DockerClient       = getDockerClient().get
   val testNetwork: DockerNetwork = DockerNetwork("synereo", "10.100.101.0/24")
   val apiUri                     = Uri("https://localhost:9876/api")
-  val ae: Map[String, String]    = Map("TWEET_LEVEL" -> "warning")
+  val ae: Map[String, String]    = Map("TWEET_LEVEL" -> "trace")
 
   lazy val headlessNode: Node = HeadlessNode(name = s"headlessNode-${java.util.UUID.randomUUID()}",
                                              deploymentMode = Distributed,
@@ -53,7 +53,7 @@ class ManualDualNodeTest extends WordSpec with ApiClient with Matchers with Scal
                                              exposedDebugPort = Some(5005),
                                              exposedMongoPort = Some(37017),
                                              exposedRabbitManagementPort = Some(55672),
-                                             suspendForDebugger = false)
+                                             suspendForDebugger = true)
 
   lazy val headedNode: Node = HeadedNode(name = s"headedNode-${java.util.UUID.randomUUID()}",
                                          deploymentMode = Distributed,
@@ -75,7 +75,7 @@ class ManualDualNodeTest extends WordSpec with ApiClient with Matchers with Scal
                                          exposedDebugPort = Some(5006),
                                          exposedMongoPort = Some(27017),
                                          exposedRabbitManagementPort = Some(55673),
-                                         suspendForDebugger = false)
+                                         suspendForDebugger = true)
 
   def setupNetwork(): Unit = setupTestNetwork(client, testNetwork)
 

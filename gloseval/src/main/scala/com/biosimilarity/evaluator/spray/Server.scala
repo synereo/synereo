@@ -30,7 +30,7 @@ class Server(settings: ServerSettings, actorSystem: Option[ActorSystem] = None, 
       SRPSessionManager.reset()
       CompletionMapper.reset()
       bfactory.BFactoryMapInitializer.makeMap()
-      ConnectionManager.sendStartEngineRequest()
+      ConnectionManager.pureConvenienceMethod()
       if (EvalConfigWrapper.isOmniRequired() && !OmniClient.canConnect()) throw new Exception("Unable to connect to OmniCore")
       @transient
       val system: ActorSystem = ActorSystem("evaluator-system")

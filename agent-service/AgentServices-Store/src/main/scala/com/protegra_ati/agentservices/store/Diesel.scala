@@ -2258,27 +2258,14 @@ package diesel {
         )
         for ( n <- EvalNodeMapper.get( node ) ) {
           expr match {
-            case ctcRq@ConcreteHL.ConnectToClientRequest( uris ) => {
-              val newNode : StdEvalChannel = ptToMany(
-                new URI( "agent", null, localHost, localPort, dataLocation, null, null ),
-                uris.toList
-              )
-              val e = new DieselEngineCtor.DieselEngine( None )
+            case ctcRq @ ConcreteHL.ConnectToClientRequest(stageTwoConfigurationFileName, localhostURI, uris) =>
+              BasicLogService.tweet(s"I DON'T EXIST WHEN YOU DON'T SEE ME: $ctcRq")
+              val newNode: StdEvalChannel = ptToMany(localhostURI, uris.toList)(Some(stageTwoConfigurationFileName))
+              val e = new DieselEngineCtor.DieselEngine(Some(stageTwoConfigurationFileName))
               val nodeId = UUID.randomUUID()
               val nodeKey = nodeId.toString
-
               EvalNodeMapper += ( nodeKey -> newNode )
-              e.indirectStdLooper( nodeKey )
-            }
-            case seRq@ConcreteHL.StartEngineRequest( cfgFN ) => {
-              BasicLogService.tweet(s"I DON'T EXIST WHEN YOU DON'T SEE ME: $seRq")
-              val e = new DieselEngineCtor.DieselEngine(Some(cfgFN))
-              val nodeId = UUID.randomUUID()
-              val nodeKey = nodeId.toString
-
-              EvalNodeMapper += ( nodeKey -> DieselEngineCtor.dslEvaluatorAgent(Some(cfgFN)))
-              e.indirectStdLooper( nodeKey )
-            }
+              e.indirectStdLooper( nodeKey ).go()
           }
         }
       }
